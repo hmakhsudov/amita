@@ -1,0 +1,16 @@
+<svg width="640" height="400" viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <g stroke="#245B35" stroke-width="2" opacity="0.5">
+    <path d="M80 220c40-90 140-90 180 0 40 90 140 90 180 0"/>
+    <path d="M120 250c30-60 90-60 120 0 30 60 90 60 120 0"/>
+    <path d="M60 150c30-60 90-60 120 0 30 60 90 60 120 0"/>
+    <path d="M300 140c30-60 90-60 120 0 30 60 90 60 120 0"/>
+    <path d="M240 280c20-40 60-40 80 0 20 40 60 40 80 0"/>
+  </g>
+  <g fill="#245B35" opacity="0.2">
+    <circle cx="180" cy="120" r="6"/>
+    <circle cx="440" cy="200" r="6"/>
+    <circle cx="260" cy="210" r="6"/>
+    <circle cx="520" cy="150" r="6"/>
+  </g>
+  <!-- TODO: replace with real client background pattern -->
+</svg>

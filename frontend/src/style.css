@@ -1,0 +1,175 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap");
+
+:root {
+  --color-avocado: #345f20;
+  --color-matcha: #bcd001;
+  --color-lime: #e8ea6c;
+  --color-eggshell: #f4eee0;
+  --card: #ffffff;
+  --text-body: #2f362f;
+  --soft-border: rgba(52, 95, 32, 0.12);
+
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--text-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-eggshell);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0 0 0.35em;
+  font-family: "Oswald", "Inter", sans-serif;
+  letter-spacing: 0.01em;
+  color: var(--color-avocado);
+}
+
+p {
+  margin: 0 0 0.75em;
+}
+
+button {
+  font-family: inherit;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.section {
+  margin: 3rem 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(52, 95, 32, 0.08);
+  color: var(--color-avocado);
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 1.1rem;
+  box-shadow: 0 18px 48px rgba(52, 95, 32, 0.06);
+  border: 1px solid var(--soft-border);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--color-avocado);
+  cursor: pointer;
+  font-weight: 700;
+  background: var(--card);
+  color: var(--color-avocado);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.cta.primary {
+  background: linear-gradient(135deg, #ffffff, #f8f4e8);
+  box-shadow: 0 10px 28px rgba(52, 95, 32, 0.12);
+}
+
+.cta.secondary {
+  border-color: rgba(52, 95, 32, 0.35);
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(52, 95, 32, 0.15);
+  border-color: var(--color-matcha);
+  background: #ffffff;
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(52, 95, 32, 0.07);
+  color: var(--color-avocado);
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.muted {
+  color: rgba(47, 54, 47, 0.75);
+}
+
+.pattern-bg {
+  background-image: url("@/assets/fruit-pattern.svg");
+  background-repeat: repeat;
+  background-size: 240px;
+  opacity: 0.6;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.reveal.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+  }
+
+  .section {
+    margin: 2rem 0;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .cta {
+    min-height: 44px;
+  }
+}
