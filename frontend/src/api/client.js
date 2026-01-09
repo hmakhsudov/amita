@@ -1,8 +1,13 @@
 import axios from "axios";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "@/utils/authTokens";
 
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL,
 });
 
 api.interceptors.request.use((config) => {
@@ -27,10 +32,7 @@ api.interceptors.response.use(
       const refresh = getRefreshToken();
       if (refresh) {
         try {
-          const res = await axios.post(
-            `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/api/auth/token/refresh/`,
-            { refresh }
-          );
+          const res = await axios.post(`${baseURL}/auth/token/refresh/`, { refresh });
           setTokens(res.data.access, refresh);
           original.headers.Authorization = `Bearer ${res.data.access}`;
           return api(original);
