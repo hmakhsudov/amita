@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { usePlanStore } from "@/stores/plan";
 import { useRouter } from "vue-router";
@@ -14,6 +14,7 @@ const messages = ref([]);
 const sending = ref(false);
 const error = ref("");
 const conversationId = ref(localStorage.getItem("assistantConversationId") || "");
+const messagesRef = ref(null);
 
 const isClient = computed(() => auth.state.user?.role === "client");
 const canShowPlanAction = computed(
@@ -38,12 +39,20 @@ const pushAssistantMessage = (payload) => {
   });
 };
 
+const scrollToBottom = async () => {
+  await nextTick();
+  if (messagesRef.value) {
+    messagesRef.value.scrollTop = messagesRef.value.scrollHeight;
+  }
+};
+
 const sendMessage = async (text) => {
-  const message = (text || "").trim();
+  const message = (text ?? input.value).trim();
   if (!message || sending.value) return;
   error.value = "";
   pushUserMessage(message);
   input.value = "";
+  await scrollToBottom();
   sending.value = true;
   try {
     const payload = await sendAiMessage({
@@ -56,6 +65,7 @@ const sendMessage = async (text) => {
       localStorage.setItem("assistantConversationId", payload.conversation_id);
     }
     pushAssistantMessage(payload);
+    await scrollToBottom();
   } catch (err) {
     error.value = "Не удалось получить ответ, попробуйте ещё раз.";
   } finally {
@@ -130,7 +140,7 @@ const getFollowUpReply = (text) => {
     </div>
 
     <div class="card chat">
-      <div class="messages">
+      <div ref="messagesRef" class="messages">
         <article
           v-for="(msg, index) in messages"
           :key="index"
@@ -196,12 +206,13 @@ const getFollowUpReply = (text) => {
         <div v-if="sending" class="typing muted">Ассистент печатает...</div>
       </div>
 
-      <form class="input" @submit.prevent="sendMessage(input.value)">
+      <form class="input" @submit.prevent="sendMessage">
         <input
           v-model="input"
           type="text"
           placeholder="Опишите ваши цели и ощущения"
           :disabled="sending"
+          @keydown.enter.exact.prevent="sendMessage"
         />
         <button class="cta primary" type="submit" :disabled="sending || !input.trim()">
           Отправить
