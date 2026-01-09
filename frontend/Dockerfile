@@ -1,5 +1,4 @@
-FROM node:18-alpine
-
+FROM node:22-alpine AS frontend_builder
 WORKDIR /app
 
 COPY frontend/package*.json /app/

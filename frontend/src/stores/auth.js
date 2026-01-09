@@ -22,7 +22,7 @@ const fetchMe = async () => {
   state.loadingMe = true;
   state.error = null;
   try {
-    const res = await api.get("/api/auth/me/");
+    const res = await api.get("/auth/me/");
     state.user = res.data;
   } catch (error) {
     state.user = null;
@@ -37,7 +37,7 @@ const login = async ({ email, password }) => {
   state.loading = true;
   state.error = null;
   try {
-    const res = await api.post("/api/auth/token/", { email, password });
+    const res = await api.post("/auth/token/", { email, password });
     setTokens(res.data.access, res.data.refresh);
     syncTokens();
     await fetchMe();
@@ -53,7 +53,7 @@ const register = async ({ name, phone, email, password, role }) => {
   state.loading = true;
   state.error = null;
   try {
-    await api.post("/api/auth/register/", {
+    await api.post("/auth/register/", {
       name,
       phone,
       email,
@@ -76,7 +76,7 @@ const updateProfile = async (formData) => {
   state.loading = true;
   state.error = null;
   try {
-    const res = await api.patch("/api/auth/me/", formData, {
+    const res = await api.patch("/auth/me/", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     state.user = res.data;

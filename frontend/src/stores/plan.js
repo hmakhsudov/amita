@@ -21,7 +21,7 @@ const fetchPlan = async () => {
   state.loading = true;
   state.error = "";
   try {
-    const res = await api.get("/api/plan/");
+    const res = await api.get("/plan/");
     setFromPlan(res.data);
   } catch (error) {
     state.error = "Не удалось загрузить план.";
@@ -34,7 +34,7 @@ const fetchPlan = async () => {
 const addToPlan = async (serviceId, qty = 1) => {
   state.error = "";
   try {
-    const res = await api.post("/api/plan/items/", { service_id: serviceId, qty });
+    const res = await api.post("/plan/items/", { service_id: serviceId, qty });
     setFromPlan(res.data);
     return res.data;
   } catch (error) {
@@ -46,7 +46,7 @@ const addToPlan = async (serviceId, qty = 1) => {
 const updateQty = async (itemId, qty) => {
   state.error = "";
   try {
-    const res = await api.patch(`/api/plan/items/${itemId}/`, { qty });
+    const res = await api.patch(`/plan/items/${itemId}/`, { qty });
     setFromPlan(res.data);
   } catch (error) {
     state.error = "Не удалось обновить количество.";
@@ -57,7 +57,7 @@ const updateQty = async (itemId, qty) => {
 const removeItem = async (itemId) => {
   state.error = "";
   try {
-    const res = await api.delete(`/api/plan/items/${itemId}/`);
+    const res = await api.delete(`/plan/items/${itemId}/`);
     setFromPlan(res.data);
   } catch (error) {
     state.error = "Не удалось удалить позицию.";
@@ -68,7 +68,7 @@ const removeItem = async (itemId) => {
 const clearPlan = async () => {
   state.error = "";
   try {
-    const res = await api.delete("/api/plan/clear/");
+    const res = await api.delete("/plan/clear/");
     setFromPlan(res.data);
   } catch (error) {
     state.error = "Не удалось очистить план.";

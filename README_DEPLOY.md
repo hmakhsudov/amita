@@ -7,7 +7,7 @@ This guide deploys the full stack using Docker Compose over a public IPv4 only:
 
 ## Prerequisites
 - Docker + Docker Compose installed on your server
-- Server public IPv4: `185.152.92.228`
+- Server public IPv4: `72.56.70.71`
 
 ## 1) Clone and configure
 
@@ -24,7 +24,7 @@ cp .env.example .env
 
 Key variables:
 - `DJANGO_SECRET_KEY` (required)
-- `DJANGO_ALLOWED_HOSTS` (must include `185.152.92.228`)
+- `DJANGO_ALLOWED_HOSTS` (must include `72.56.70.71`)
 - `POSTGRES_*` values
 - `OPENAI_API_KEY` (if you use AI assistant)
 - `CORS_ALLOWED_ORIGINS` / `CSRF_TRUSTED_ORIGINS` (use the IPv4)
@@ -44,15 +44,15 @@ docker compose exec backend python manage.py createsuperuser
 
 ## 3) Access
 
-- Frontend: `http://185.152.92.228/`
-- API: `http://185.152.92.228/api/`
-- Admin: `http://185.152.92.228/admin/`
+- Frontend: `http://72.56.70.71/`
+- API: `http://72.56.70.71/api/`
+- Admin: `http://72.56.70.71/admin/`
 
 Quick checks:
 
 ```bash
-curl -I http://185.152.92.228/
-curl http://185.152.92.228/api/health/
+curl -I http://72.56.70.71/
+curl http://72.56.70.71/api/health/
 ```
 
 ## 4) Updating
@@ -71,8 +71,8 @@ docker compose up -d --build
   docker compose logs -f db
   ```
 - Common issues:
-  - `ALLOWED_HOSTS` missing `185.152.92.228`
-  - `CSRF_TRUSTED_ORIGINS` missing `http://185.152.92.228`
+  - `ALLOWED_HOSTS` missing `72.56.70.71`
+  - `CSRF_TRUSTED_ORIGINS` missing `http://72.56.70.71`
   - Wrong DB credentials in `.env`
   - Static or media permissions: ensure volumes are mounted and writable
 
