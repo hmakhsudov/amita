@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { usePlanStore } from "@/stores/plan";
 import { useAuthStore } from "@/stores/auth";
 
 const plan = usePlanStore();
 const auth = useAuthStore();
 const isAuthorized = computed(() => auth.isAuthenticated.value);
+const { t } = useI18n();
 
 const loadPlan = async () => {
   if (!isAuthorized.value) return;
@@ -38,14 +40,14 @@ const clearAll = async () => {
 <template>
   <section class="section">
     <div class="section-heading">
-      <p class="tag">План процедур</p>
-      <h1>Ваш план</h1>
-      <p class="muted">Список выбранных услуг сохраняется в вашем профиле.</p>
+      <p class="tag">{{ t("plan.title") }}</p>
+      <h1>{{ t("plan.title") }}</h1>
+      <p class="muted">{{ t("plan.subtitle") }}</p>
     </div>
 
     <div v-if="!isAuthorized" class="card empty">
-      <p class="muted">Войдите, чтобы сохранить и посмотреть свой план процедур.</p>
-      <router-link class="cta secondary" to="/login">Войти</router-link>
+      <p class="muted">{{ t("plan.loginHint") }}</p>
+      <router-link class="cta secondary" to="/login">{{ t("nav.login") }}</router-link>
     </div>
 
     <div v-else-if="plan.state.loading" class="card plan-card">
@@ -56,12 +58,14 @@ const clearAll = async () => {
 
     <div v-else-if="plan.state.error" class="card empty">
       <p class="error">{{ plan.state.error }}</p>
-      <button class="cta secondary" type="button" @click="loadPlan">Повторить</button>
+      <button class="cta secondary" type="button" @click="loadPlan">
+        {{ t("common.retry") }}
+      </button>
     </div>
 
     <div v-else-if="!plan.state.items.length" class="card empty">
-      <p class="muted">План пуст. Добавьте услуги на странице «Услуги».</p>
-      <router-link class="cta secondary" to="/services">Перейти к услугам</router-link>
+      <p class="muted">{{ t("plan.empty") }}</p>
+      <router-link class="cta secondary" to="/services">{{ t("plan.toServices") }}</router-link>
     </div>
 
     <div v-else class="card plan-card">
@@ -69,25 +73,27 @@ const clearAll = async () => {
         <article v-for="item in plan.state.items" :key="item.id" class="plan-item">
           <div>
             <h3>{{ item.service?.name }}</h3>
-            <p class="muted">{{ item.service?.category?.name || "Без категории" }}</p>
-            <p class="muted">Количество: {{ item.qty }}</p>
+            <p class="muted">{{ item.service?.category?.name || t("services.uncategorized") }}</p>
+            <p class="muted">{{ t("plan.qty") }}: {{ item.qty }}</p>
           </div>
           <div class="price">
-            <strong>{{ item.service?.price }} ₽</strong>
+            <strong>{{ item.service?.price }} €</strong>
             <button class="cta secondary" type="button" @click="removeItem(item.id)">
-              Удалить
+              {{ t("favorites.remove") }}
             </button>
           </div>
         </article>
       </div>
       <div class="footer">
         <div>
-          <p class="muted">Итого</p>
-          <strong>{{ plan.total.value.toFixed(2) }} ₽</strong>
+          <p class="muted">{{ t("plan.total") }}</p>
+          <strong>{{ plan.total.value.toFixed(2) }} €</strong>
         </div>
         <div class="actions">
-          <button class="cta secondary" type="button" @click="clearAll">Очистить план</button>
-          <router-link class="cta primary" to="/booking">Перейти к записи</router-link>
+          <button class="cta secondary" type="button" @click="clearAll">
+            {{ t("plan.clear") }}
+          </button>
+          <router-link class="cta primary" to="/booking">{{ t("plan.toBooking") }}</router-link>
         </div>
       </div>
     </div>
@@ -164,7 +170,7 @@ const clearAll = async () => {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .plan-item {
     flex-direction: column;
     align-items: flex-start;

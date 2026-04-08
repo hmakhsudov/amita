@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 const props = defineProps({
@@ -10,6 +11,7 @@ const props = defineProps({
 
 const emit = defineEmits(["update:form"]);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 
 const update = (key, value) => {
   emit("update:form", { ...props.form, [key]: value });
@@ -19,42 +21,42 @@ const update = (key, value) => {
 <template>
   <section class="card reveal" :ref="revealRef">
     <div class="section-heading">
-      <p class="tag">Данные</p>
-      <h3>Контакты клиента</h3>
+      <p class="tag">{{ t("booking.stepContact") }}</p>
+      <h3>{{ t("booking.contactTitle") }}</h3>
     </div>
     <div class="form-grid">
       <label>
-        <span>Имя</span>
+        <span>{{ t("booking.name") }}</span>
         <input
           type="text"
           :value="form.name"
-          placeholder="Ваше имя"
+          :placeholder="t('booking.namePlaceholder')"
           @input="update('name', $event.target.value)"
         />
       </label>
       <label>
-        <span>Телефон</span>
+        <span>{{ t("booking.phone") }}</span>
         <input
           type="tel"
           :value="form.phone"
-          placeholder="+43 (___) ___-__-__"
+          :placeholder="t('booking.phonePlaceholder')"
           @input="update('phone', $event.target.value)"
         />
       </label>
       <label>
-        <span>Email</span>
+        <span>{{ t("booking.email") }}</span>
         <input
           type="email"
           :value="form.email"
-          placeholder="you@example.com"
+          :placeholder="t('booking.emailPlaceholder')"
           @input="update('email', $event.target.value)"
         />
       </label>
       <label class="full">
-        <span>Комментарий</span>
+        <span>{{ t("booking.comment") }}</span>
         <textarea
           :value="form.comment"
-          placeholder="Пожелания или детали"
+          :placeholder="t('booking.commentPlaceholder')"
           rows="3"
           @input="update('comment', $event.target.value)"
         ></textarea>
@@ -99,5 +101,12 @@ textarea:focus {
 
 .full {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 }
 </style>

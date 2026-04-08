@@ -1,5 +1,6 @@
 import { computed, reactive } from "vue";
 import api from "@/api/client";
+import { i18n } from "@/i18n";
 
 const state = reactive({
   items: [],
@@ -24,7 +25,7 @@ const fetchPlan = async () => {
     const res = await api.get("/plan/");
     setFromPlan(res.data);
   } catch (error) {
-    state.error = "Не удалось загрузить план.";
+    state.error = i18n.global.t("plan.loadError");
     throw error;
   } finally {
     state.loading = false;
@@ -38,7 +39,7 @@ const addToPlan = async (serviceId, qty = 1) => {
     setFromPlan(res.data);
     return res.data;
   } catch (error) {
-    state.error = "Не удалось добавить услугу в план.";
+    state.error = i18n.global.t("plan.addError");
     throw error;
   }
 };
@@ -49,7 +50,7 @@ const updateQty = async (itemId, qty) => {
     const res = await api.patch(`/plan/items/${itemId}/`, { qty });
     setFromPlan(res.data);
   } catch (error) {
-    state.error = "Не удалось обновить количество.";
+    state.error = i18n.global.t("plan.updateQtyError");
     throw error;
   }
 };
@@ -60,7 +61,7 @@ const removeItem = async (itemId) => {
     const res = await api.delete(`/plan/items/${itemId}/`);
     setFromPlan(res.data);
   } catch (error) {
-    state.error = "Не удалось удалить позицию.";
+    state.error = i18n.global.t("plan.removeError");
     throw error;
   }
 };
@@ -71,7 +72,7 @@ const clearPlan = async () => {
     const res = await api.delete("/plan/clear/");
     setFromPlan(res.data);
   } catch (error) {
-    state.error = "Не удалось очистить план.";
+    state.error = i18n.global.t("plan.clearError");
     throw error;
   }
 };

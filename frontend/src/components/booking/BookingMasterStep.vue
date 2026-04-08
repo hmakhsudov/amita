@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 import fallbackAvatar from "@/assets/salon-5.jpg";
 
@@ -10,17 +11,22 @@ const props = defineProps({
 
 const emit = defineEmits(["select"]);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 </script>
 
 <template>
   <section class="card reveal" :ref="revealRef">
     <div class="section-heading">
-      <p class="tag">Мастер</p>
-      <h3>Выберите мастера</h3>
-      <p class="muted">Запись возможна только при выборе специалиста.</p>
+      <p class="tag">{{ t("booking.stepMaster") }}</p>
+      <h3>{{ t("booking.chooseMasterTitle") }}</h3>
+      <p class="muted">{{ t("booking.chooseMasterHint") }}</p>
     </div>
     <p v-if="!masters.length" class="muted">
-      {{ hasService ? "Нет доступных мастеров для выбранной услуги." : "Сначала выберите услугу." }}
+      {{
+        hasService
+          ? t("booking.noMastersForService")
+          : t("booking.selectServiceFirst")
+      }}
     </p>
     <div class="grid">
       <article
@@ -33,7 +39,7 @@ const { revealRef } = useReveal();
         <img :src="master.avatar_url || fallbackAvatar" :alt="master.name" />
         <div>
           <h4>{{ master.name }}</h4>
-          <p class="muted">{{ master.phone || "Мастер салона BIZU" }}</p>
+          <p class="muted">{{ master.phone || t("booking.masterFallback") }}</p>
         </div>
       </article>
     </div>
@@ -79,5 +85,16 @@ const { revealRef } = useReveal();
 
 .small {
   font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .master {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
 }
 </style>

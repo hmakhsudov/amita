@@ -1,14 +1,17 @@
 <script setup>
 // TODO: заменить на реальные фото брендовых предметов (стаканы, пакеты, вывески)
+import { useI18n } from "vue-i18n";
 import heroLogo from "@/assets/logo-bizu.svg";
 import salonOne from "@/assets/salon-1.jpg";
 import salonThree from "@/assets/salon-3.jpg";
 import { useReveal } from "@/composables/useReveal";
 
+const { t } = useI18n();
+
 const team = [
-  { name: "Амирa", title: "Лид-терапевт", focus: "Холистичные уходы" },
-  { name: "Лина", title: "Специалист по телу", focus: "Расслабляющий массаж" },
-  { name: "Кай", title: "Операции", focus: "Клиентский сервис" },
+  { name: "Амирa", titleKey: "about.teamLead", focusKey: "about.teamLeadFocus" },
+  { name: "Лина", titleKey: "about.teamBody", focusKey: "about.teamBodyFocus" },
+  { name: "Кай", titleKey: "about.teamOps", focusKey: "about.teamOpsFocus" },
 ];
 
 const { revealRef } = useReveal();
@@ -19,41 +22,39 @@ const { revealRef } = useReveal();
     <section class="section">
       <div class="hero-card card reveal" :ref="revealRef">
         <div>
-          <p class="tag">О компании</p>
-          <h1>Премиальный салон красоты и healthy bar</h1>
+          <p class="tag">{{ t("nav.about") }}</p>
+          <h1>{{ t("about.title") }}</h1>
         
           <div class="contact-grid">
             <div>
-              <strong>Адрес</strong>
+              <strong>{{ t("about.address") }}</strong>
               <p>Austria, 1030, Vienna, Modecenterstraße,20/1/2</p>
             </div>
             <div>
-              <strong>Телефон</strong>
+              <strong>{{ t("about.phone") }}</strong>
               <p>+436767460828</p>
             </div>
             <div>
-              <strong>Email</strong>
+              <strong>{{ t("about.email") }}</strong>
               <p>bizu2305@gmail.com</p>
             </div>
             <div>
-              <strong>Часы</strong>
-              <p>09:00 - 20:00 ежедневно</p>
+              <strong>{{ t("about.hours") }}</strong>
+              <p>09:00 - 20:00 {{ t("about.daily") }}</p>
             </div>
           </div>
         </div>
         <div class="logo-block">
-          <img :src="heroLogo" alt="Логотип BIZU" />
-          <p class="muted">Скоро добавим брендовые изображения (стаканы, пакеты, вывески).</p>
+          <img :src="heroLogo" :alt="t('about.logoAlt')" />
+          <p class="muted">{{ t("about.logoNote") }}</p>
         </div>
       </div>
     </section>
 
     <section class="section">
       <div class="section-heading reveal" :ref="revealRef">
-        <h2>Команда</h2>
-        <p class="muted">
-          Люди и технологии вместе: тёплый сервис + автоматизация рекомендаций и записи.
-        </p>
+        <h2>{{ t("about.teamTitle") }}</h2>
+        <p class="muted">{{ t("about.teamText") }}</p>
       </div>
       <div class="team-grid">
         <article
@@ -65,8 +66,8 @@ const { revealRef } = useReveal();
           <div class="avatar">{{ member.name[0] }}</div>
           <div>
             <h3>{{ member.name }}</h3>
-            <p class="muted">{{ member.title }}</p>
-            <p>{{ member.focus }}</p>
+            <p class="muted">{{ t(member.titleKey) }}</p>
+            <p>{{ t(member.focusKey) }}</p>
           </div>
         </article>
       </div>
@@ -74,21 +75,18 @@ const { revealRef } = useReveal();
 
     <section class="section brand-story">
       <div class="section-heading reveal" :ref="revealRef">
-        <p class="tag">Бренд-сторис</p>
-        <h2>Фирменные предметы</h2>
-        <p class="muted">
-          Используем фото авокадо, еды, напитков и мерча (стаканы/пакеты) из брендбука. Сейчас —
-          заглушки.
-        </p>
+        <p class="tag">{{ t("about.brandStory") }}</p>
+        <h2>{{ t("about.brandStoryTitle") }}</h2>
+        <p class="muted">{{ t("about.brandStoryText") }}</p>
       </div>
       <div class="story-grid">
         <figure class="story-card reveal" :ref="revealRef">
-          <img :src="salonOne" alt="Напитки" />
-          <figcaption>Напитки и смузи</figcaption>
+          <img :src="salonOne" :alt="t('about.brandDrinkAlt')" />
+          <figcaption>{{ t("about.brandDrink") }}</figcaption>
         </figure>
         <figure class="story-card reveal" :ref="revealRef">
-          <img :src="salonThree" alt="Интерьер" />
-          <figcaption>Интерьер в eggshell-палитре</figcaption>
+          <img :src="salonThree" :alt="t('about.brandInteriorAlt')" />
+          <figcaption>{{ t("about.brandInterior") }}</figcaption>
         </figure>
       </div>
     </section>
@@ -183,7 +181,7 @@ const { revealRef } = useReveal();
   font-weight: 700;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .hero-card {
     grid-template-columns: 1fr;
   }

@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from .models import Service, ServiceCategory
+from .models import Service, ServiceCategory, UserProfile
 from .permissions import IsAdminRoleOrReadOnly, IsServiceMasterOrAdmin
 from .serializers import CategorySerializer, ServiceSerializer
 
@@ -30,3 +30,12 @@ class ServiceViewSet(viewsets.ModelViewSet):
         if master_id:
             queryset = queryset.filter(masters__id=master_id)
         return queryset.distinct()
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        profile = getattr(user, "profile", None)
+        if profile and profile.role == UserProfile.ROLE_MASTER:
+            service = serializer.save()
+            service.masters.set([user])
+            return
+        serializer.save()

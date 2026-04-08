@@ -1,20 +1,24 @@
 <script setup>
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
-const benefits = [
+const { t } = useI18n();
+
+const benefits = computed(() => [
   {
-    title: "Выберите услугу",
-    text: "Каталог процедур с понятными ценами и длительностью. Можно выбрать мастера.",
+    title: t("home.howStep1Title"),
+    text: t("home.howStep1Text"),
   },
   {
-    title: "Запишитесь онлайн",
-    text: "Выберите дату и время — запись сохраняется сразу в системе.",
+    title: t("home.howStep2Title"),
+    text: t("home.howStep2Text"),
   },
   {
-    title: "Личный кабинет",
-    text: "Ваши записи, избранные услуги, план процедур и история посещений в одном месте.",
+    title: t("home.howStep3Title"),
+    text: t("home.howStep3Text"),
   },
-];
+]);
 
 const { revealRef } = useReveal();
 </script>
@@ -22,9 +26,9 @@ const { revealRef } = useReveal();
 <template>
   <section class="section">
     <div class="section-heading reveal" :ref="revealRef">
-      <p class="tag">Как это работает</p>
-      <h2>Запись и уход — просто и прозрачно</h2>
-      <p class="muted">Выбирайте услуги, записывайтесь онлайн и управляйте визитами в кабинете.</p>
+      <p class="tag">{{ t("home.howTitle") }}</p>
+      <h2>{{ t("home.howHeadline") }}</h2>
+      <p class="muted">{{ t("home.howSubtitle") }}</p>
     </div>
     <div class="grid">
       <article
@@ -39,8 +43,8 @@ const { revealRef } = useReveal();
       </article>
     </div>
     <div class="actions">
-      <router-link class="cta primary" to="/booking">Записаться онлайн</router-link>
-      <router-link class="cta secondary" to="/profile">Личный кабинет</router-link>
+      <router-link class="cta primary" to="/booking">{{ t("home.heroCta") }}</router-link>
+      <router-link class="cta secondary" to="/profile">{{ t("nav.profile") }}</router-link>
     </div>
   </section>
 </template>

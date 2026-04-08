@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   bookings: { type: Array, default: () => [] },
@@ -8,6 +9,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["cancel", "message"]);
+const { t } = useI18n();
 
 const now = () => new Date();
 const sortByDateAsc = (a, b) => new Date(a.start_at) - new Date(b.start_at);
@@ -35,13 +37,15 @@ const formatDateTime = (value) => {
 };
 
 const masterLabel = (item) => {
-  return item.master?.name ? `Мастер: ${item.master.name}` : "Мастер: —";
+  return item.master?.name
+    ? t("bookings.masterLabel", { name: item.master.name })
+    : t("bookings.masterUnknown");
 };
 
 const statusLabel = (status) => {
-  if (status === "scheduled") return "Ожидается";
-  if (status === "cancelled") return "Отменено";
-  if (status === "completed") return "Выполнено";
+  if (status === "scheduled") return t("bookings.pending");
+  if (status === "cancelled") return t("bookings.cancelled");
+  if (status === "completed") return t("bookings.completed");
   return "—";
 };
 
@@ -56,7 +60,7 @@ const canCancel = (item) => {
 };
 
 const handleCancel = (id) => {
-  if (confirm("Вы уверены, что хотите отменить запись?")) {
+  if (confirm(t("bookings.confirmCancel"))) {
     emit("cancel", id);
   }
 };
@@ -69,18 +73,18 @@ const handleMessage = (masterId) => {
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">Мои записи</p>
-      <h3>Предстоящие и прошлые</h3>
+      <p class="tag">{{ t("profile.tabs.bookings") }}</p>
+      <h3>{{ t("bookings.upcoming") }} / {{ t("bookings.past") }}</h3>
     </div>
     <div v-if="loading" class="grid">
       <div v-for="n in 2" :key="n" class="booking skeleton"></div>
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="!bookings.length" class="empty muted">
-      Пока нет записей. Запишитесь онлайн на удобное время.
+      {{ t("bookings.noBookings") }}
     </div>
     <div v-else class="grid">
-      <h4 v-if="upcoming.length" class="subheading">Предстоящие</h4>
+      <h4 v-if="upcoming.length" class="subheading">{{ t("bookings.upcoming") }}</h4>
       <article v-for="item in upcoming" :key="`up-${item.id}`" class="booking">
         <div>
           <h4>{{ item.service?.name }}</h4>
@@ -94,7 +98,7 @@ const handleMessage = (masterId) => {
             type="button"
             @click="handleCancel(item.id)"
           >
-            Отменить
+            {{ t("bookings.cancel") }}
           </button>
           <button
             v-if="item.master?.id"
@@ -102,13 +106,13 @@ const handleMessage = (masterId) => {
             type="button"
             @click="handleMessage(item.master.id)"
           >
-            Написать мастеру
+            {{ t("bookings.writeMaster") }}
           </button>
-          <router-link class="cta primary" to="/booking">Записаться снова</router-link>
+          <router-link class="cta primary" to="/booking">{{ t("bookings.bookAgain") }}</router-link>
         </div>
       </article>
 
-      <h4 v-if="past.length" class="subheading">Прошлые</h4>
+      <h4 v-if="past.length" class="subheading">{{ t("bookings.past") }}</h4>
       <article v-for="item in past" :key="`past-${item.id}`" class="booking">
         <div>
           <h4>{{ item.service?.name }}</h4>
@@ -122,9 +126,9 @@ const handleMessage = (masterId) => {
             type="button"
             @click="handleMessage(item.master.id)"
           >
-            Написать мастеру
+            {{ t("bookings.writeMaster") }}
           </button>
-          <router-link class="cta primary" to="/booking">Записаться снова</router-link>
+          <router-link class="cta primary" to="/booking">{{ t("bookings.bookAgain") }}</router-link>
         </div>
       </article>
     </div>
@@ -208,7 +212,7 @@ const handleMessage = (masterId) => {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .booking {
     flex-direction: column;
     align-items: flex-start;
@@ -220,6 +224,14 @@ const handleMessage = (masterId) => {
 }
 
 @media (max-width: 768px) {
+  .grid {
+    gap: 0.65rem;
+  }
+
+  .booking {
+    width: 100%;
+  }
+
   .actions .cta {
     width: 100%;
     min-height: 44px;

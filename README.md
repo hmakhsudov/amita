@@ -25,7 +25,7 @@ Set these for the AI assistant endpoint in the project root `.env`:
 
 ### Endpoints
 - `/` — Health check JSON: “Beauty service API is running”.
-- `/admin/` — manage services, categories, clients.
+- `/django-admin/` — Django admin for backend maintenance.
 - `/api/services/` — placeholder services list (replace with DB + serializers).
 - `/api/recommendations/` — placeholder recommendations (future ML hook).
 - `/api/ai/chat/` — AI cosmetologist assistant (OpenAI required).

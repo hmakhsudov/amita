@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 import { useAuthStore } from "@/stores/auth";
 import { usePlanStore } from "@/stores/plan";
@@ -12,12 +13,13 @@ const { revealRef } = useReveal();
 const auth = useAuthStore();
 const plan = usePlanStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const submit = async () => {
   error.value = "";
   try {
     await auth.login({ email: form.value.email, password: form.value.password });
-    if (auth.state.user?.role !== "admin") {
+    if (auth.state.user?.role === "client") {
       try {
         await plan.fetchPlan();
       } catch (planError) {
@@ -29,7 +31,7 @@ const submit = async () => {
     submitted.value = true;
     router.push("/profile");
   } catch (err) {
-    error.value = auth.state.error || "Не удалось войти. Проверьте данные.";
+    error.value = auth.state.error || t("auth.loginError");
   }
 };
 </script>
@@ -37,29 +39,29 @@ const submit = async () => {
 <template>
   <section class="page">
     <div class="card auth-card reveal" :ref="revealRef">
-      <p class="tag">Вход</p>
-      <h1>Вход в аккаунт</h1>
-      <p class="muted">Используйте email или телефон и пароль, чтобы продолжить.</p>
+      <p class="tag">{{ t("auth.loginTitle") }}</p>
+      <h1>{{ t("auth.loginTitle") }}</h1>
+      <p class="muted">{{ t("auth.loginSubtitle") }}</p>
       <form class="form" @submit.prevent="submit">
         <label>
-          <span>Email</span>
-          <input v-model="form.email" type="email" placeholder="you@example.com" required />
+          <span>{{ t("auth.emailOrPhone") }}</span>
+          <input v-model="form.email" type="email" :placeholder="t('auth.emailPlaceholder')" required />
         </label>
         <label>
-          <span>Пароль</span>
-          <input v-model="form.password" type="password" placeholder="••••••••" required />
+          <span>{{ t("auth.password") }}</span>
+          <input v-model="form.password" type="password" :placeholder="t('auth.passwordPlaceholder')" required />
         </label>
         <p v-if="error" class="error">{{ error }}</p>
         <button class="cta primary" type="submit" :disabled="auth.state.loading">
-          {{ auth.state.loading ? "Вход..." : "Войти" }}
+          {{ auth.state.loading ? t("auth.loadingLogin") : t("auth.loginBtn") }}
         </button>
       </form>
       <div class="links">
-        <router-link to="/register">Нет аккаунта? Зарегистрироваться</router-link>
+        <router-link to="/register">{{ t("auth.noAccount") }}</router-link>
       </div>
       <div v-if="submitted" class="after">
-        <p class="muted">Авторизация успешна.</p>
-        <router-link class="cta secondary" to="/profile">Перейти в личный кабинет</router-link>
+        <p class="muted">{{ t("auth.loginSuccess") }}</p>
+        <router-link class="cta secondary" to="/profile">{{ t("auth.toProfile") }}</router-link>
       </div>
     </div>
   </section>
@@ -109,5 +111,25 @@ input {
   margin-top: 1rem;
   display: grid;
   gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .form .cta {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .after .cta {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 </style>

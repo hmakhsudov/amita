@@ -17,9 +17,9 @@ def _ensure_aware(value):
     return value
 
 
-def _is_admin(user) -> bool:
+def _is_master(user) -> bool:
     profile = getattr(user, "profile", None)
-    return bool(profile and profile.role == "admin")
+    return bool(profile and profile.role == UserProfile.ROLE_MASTER)
 
 
 class BookingListCreateView(APIView):
@@ -63,7 +63,7 @@ class BookingListCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not getattr(master, "profile", None) or master.profile.role != UserProfile.ROLE_ADMIN:
+        if not getattr(master, "profile", None) or master.profile.role != UserProfile.ROLE_MASTER:
             return Response(
                 {"detail": "Выберите корректного мастера."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -198,7 +198,7 @@ class AvailabilityView(APIView):
             )
         service = get_object_or_404(Service, pk=service_id)
         master = get_object_or_404(service.masters.select_related("profile"), pk=master_id)
-        if not getattr(master, "profile", None) or master.profile.role != UserProfile.ROLE_ADMIN:
+        if not getattr(master, "profile", None) or master.profile.role != UserProfile.ROLE_MASTER:
             return Response(
                 {"detail": "Неверный мастер."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -239,7 +239,7 @@ class MasterBookingListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        if not _is_admin(request.user):
+        if not _is_master(request.user):
             return Response({"detail": "Недостаточно прав."}, status=status.HTTP_403_FORBIDDEN)
         qs = Booking.objects.select_related(
             "service",
@@ -256,7 +256,7 @@ class MasterBookingStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, pk):
-        if not _is_admin(request.user):
+        if not _is_master(request.user):
             return Response({"detail": "Недостаточно прав."}, status=status.HTTP_403_FORBIDDEN)
         booking = get_object_or_404(Booking, pk=pk, master=request.user)
         status_value = request.data.get("status")

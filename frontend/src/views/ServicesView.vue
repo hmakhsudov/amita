@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 import { fetchCategories, fetchServices } from "@/api/services";
 import { usePlanStore } from "@/stores/plan";
@@ -16,30 +17,34 @@ const plan = usePlanStore();
 const auth = useAuthStore();
 const favorites = useFavoritesStore();
 const router = useRouter();
+const { t } = useI18n();
 const isClient = computed(() => auth.state.user?.role === "client");
 const canShowFavorites = computed(
   () => !auth.isAuthenticated.value || auth.state.user?.role === "client"
 );
 
-const selectedCategory = ref("Все");
+const selectedCategory = ref("all");
 const { revealRef } = useReveal();
 
 const categoryOptions = computed(() => {
+  const options = [{ value: "all", label: t("services.all") }];
   if (categories.value.length) {
-    return ["Все", ...categories.value.map((c) => c.name)];
+    options.push(...categories.value.map((c) => ({ value: c.name, label: c.name })));
+    return options;
   }
   const uniq = new Set(services.value.map((s) => s.categoryName));
-  return ["Все", ...uniq];
+  options.push(...[...uniq].map((name) => ({ value: name, label: name })));
+  return options;
 });
 
 const filteredServices = computed(() => {
-  if (selectedCategory.value === "Все") return services.value;
+  if (selectedCategory.value === "all") return services.value;
   return services.value.filter((service) => service.categoryName === selectedCategory.value);
 });
 
 const addToPlan = async (service) => {
   if (!auth.isAuthenticated.value) {
-    toast.value = "Войдите, чтобы сохранить план.";
+    toast.value = t("services.toastLoginForPlan");
     setTimeout(() => {
       toast.value = "";
       router.push("/login");
@@ -48,9 +53,9 @@ const addToPlan = async (service) => {
   }
   try {
     await plan.addToPlan(service.id, 1);
-    toast.value = "Добавлено в план.";
+    toast.value = t("services.toastPlanAdded");
   } catch (err) {
-    toast.value = plan.state.error || "Не удалось добавить услугу в план.";
+    toast.value = plan.state.error || t("services.loadError");
   } finally {
     setTimeout(() => {
       toast.value = "";
@@ -60,7 +65,7 @@ const addToPlan = async (service) => {
 
 const toggleFavorite = async (service) => {
   if (!auth.isAuthenticated.value) {
-    toast.value = "Войдите, чтобы добавить в избранное.";
+    toast.value = t("services.toastLoginForFavorite");
     setTimeout(() => {
       toast.value = "";
       router.push("/login");
@@ -73,13 +78,13 @@ const toggleFavorite = async (service) => {
       if (favId) {
         await favorites.removeFavorite(favId);
       }
-      toast.value = "Удалено из избранного.";
+      toast.value = t("services.toastFavoriteRemoved");
     } else {
       await favorites.addFavorite(service.id);
-      toast.value = "Добавлено в избранное.";
+      toast.value = t("services.toastFavoriteAdded");
     }
   } catch (err) {
-    toast.value = favorites.state.error || "Не удалось обновить избранное.";
+    toast.value = favorites.state.error || t("services.loadError");
   } finally {
     setTimeout(() => {
       toast.value = "";
@@ -103,7 +108,7 @@ const loadData = async () => {
           description: item.description,
           price: item.price,
           duration_minutes: item.duration_minutes,
-          categoryName: item.category?.name || item.category_name || "Без категории",
+          categoryName: item.category?.name || item.category_name || t("services.uncategorized"),
         }))
       : [];
     if (auth.isAuthenticated.value && isClient.value) {
@@ -114,7 +119,7 @@ const loadData = async () => {
       }
     }
   } catch (err) {
-    error.value = "Не удалось загрузить услуги. Попробуйте позже.";
+    error.value = t("services.loadError");
   } finally {
     loading.value = false;
   }
@@ -127,35 +132,28 @@ onMounted(loadData);
   <section class="section">
     <div class="header reveal" :ref="revealRef">
       <div>
-        <p class="tag">Услуги</p>
-        <h1>Мягкие beauty-ритуалы</h1>
-        <p class="muted">
-          Страница подготовлена для будущей интеграции с системой рекомендаций. Когда API будет
-          подключен, карточки автоматически обновятся.
-        </p>
+        <p class="tag">{{ t("nav.services") }}</p>
+        <h1>{{ t("services.title") }}</h1>
+        <p class="muted">{{ t("services.subtitle") }}</p>
       </div>
       <div class="note card">
-        <strong>Скоро:</strong>
-        <p class="muted">
-          • Автоподбор процедур <br />
-          • Онлайн-бронирование <br />
-          • Напоминания и планы
-        </p>
+        <strong>{{ t("services.noteTitle") }}</strong>
+        <p class="muted" v-html="t('services.noteText')"></p>
       </div>
     </div>
 
     <div class="filters card reveal" :ref="revealRef">
-      <span class="muted">Фильтр по категориям:</span>
+      <span class="muted">{{ t("services.filterLabel") }}</span>
       <div class="filter-pills">
         <button
           v-for="cat in categoryOptions"
-          :key="cat"
+          :key="cat.value"
           class="filter"
-          :class="{ active: cat === selectedCategory }"
+          :class="{ active: cat.value === selectedCategory }"
           type="button"
-          @click="selectedCategory = cat"
+          @click="selectedCategory = cat.value"
         >
-          {{ cat }}
+          {{ cat.label }}
         </button>
       </div>
     </div>
@@ -166,7 +164,7 @@ onMounted(loadData);
     <div v-else-if="error" class="error">{{ error }}</div>
 
     <div v-else-if="!filteredServices.length" class="card empty">
-      <p class="muted">Пока нет услуг в этой категории.</p>
+      <p class="muted">{{ t("services.empty") }}</p>
     </div>
 
     <div v-else class="service-grid">
@@ -182,26 +180,28 @@ onMounted(loadData);
             <h3>{{ service.name }}</h3>
           </div>
           <div class="price">
-            <strong>{{ service.price }} ₽</strong>
-            <span class="muted">{{ service.duration_minutes }} мин</span>
+            <strong>{{ service.price }} €</strong>
+            <span class="muted">{{ service.duration_minutes }} {{ t("common.minutesShort") }}</span>
           </div>
         </div>
-        <p class="muted">
-          {{ service.description || "Описание услуги появится после подключения полного описания." }}
-        </p>
+        <p class="muted">{{ service.description || t("services.descFallback") }}</p>
         <button
           v-if="canShowFavorites"
           class="cta secondary"
           type="button"
           @click="toggleFavorite(service)"
         >
-          {{ favorites.isFavorite(service.id) ? "Убрать из избранного" : "В избранное" }}
+          {{
+            favorites.isFavorite(service.id)
+              ? t("services.favoriteRemove")
+              : t("services.favoriteAdd")
+          }}
         </button>
         <button class="cta primary" type="button" @click="addToPlan(service)">
           {{
             auth.isAuthenticated.value && plan.has(service.id)
-              ? "Добавить еще"
-              : "Добавить в план"
+              ? t("services.addMore")
+              : t("services.addToPlan")
           }}
         </button>
       </article>
@@ -319,7 +319,7 @@ onMounted(loadData);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .service-head {
     flex-direction: column;
     align-items: flex-start;

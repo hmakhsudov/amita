@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { usePlanStore } from "@/stores/plan";
@@ -12,34 +13,36 @@ const router = useRouter();
 const auth = useAuthStore();
 const plan = usePlanStore();
 const chat = useChatStore();
+const { t } = useI18n();
 const isAuthorized = computed(() => auth.isAuthenticated.value);
 const isReady = computed(() => !auth.state.loadingMe);
-const isAdmin = computed(() => auth.state.user?.role === "admin");
+const isStaffAdmin = computed(() => auth.state.user?.role === "admin");
+const isMaster = computed(() => auth.state.user?.role === "master");
+const isClient = computed(() => auth.state.user?.role === "client");
 const planCount = computed(() =>
-  isAuthorized.value && !isAdmin.value ? plan.count.value : 0
+  isAuthorized.value && isClient.value ? plan.count.value : 0
 );
 const unreadTotal = computed(() => chat.state.unreadTotal);
 const unreadTimer = ref(null);
 
 const baseLinks = [
-  { name: "Главная", path: "/" },
-  { name: "Услуги", path: "/services" },
-  { name: "Мастера", path: "/masters" },
-  { name: "AI-консультант", path: "/assistant" },
-  { name: "План", path: "/plan" },
-  { name: "О компании", path: "/about" },
-  { name: "Онлайн-запись", path: "/booking" },
+  { key: "nav.home", path: "/" },
+  { key: "nav.services", path: "/services" },
+  { key: "nav.masters", path: "/masters" },
+  { key: "nav.assistant", path: "/assistant" },
+  { key: "nav.plan", path: "/plan" },
+  { key: "nav.about", path: "/about" },
+  { key: "nav.booking", path: "/booking" },
 ];
 
 const navLinks = computed(() => {
-  const links = [...baseLinks];
-  if (isAdmin.value) {
-    links.push({ name: "Добавить услугу", path: "/admin/services/new" });
+  if (isStaffAdmin.value) {
+    return [{ path: "/admin/dashboard", label: "Админ-панель" }];
   }
-  if (isAdmin.value) {
-    return links.filter((link) => !["/plan", "/booking", "/masters"].includes(link.path));
+  if (isMaster.value) {
+    return baseLinks.filter((link) => !["/plan", "/booking"].includes(link.path));
   }
-  return links;
+  return [...baseLinks];
 });
 
 const closeMenu = () => {
@@ -107,7 +110,7 @@ const closeAndLogout = () => {
   <header class="header" :class="{ scrolled: isScrolled }">
     <div class="inner">
       <router-link class="logo" to="/" @click="closeMenu">
-        <img src="@/assets/logo-bizu.svg" alt="Логотип BIZU" />
+        <img src="@/assets/logo-bizu.svg" :alt="t('common.logoAlt')" />
         <div class="branding">
           <span class="brand">BIZU</span>
         </div>
@@ -121,7 +124,7 @@ const closeAndLogout = () => {
           class="nav-link"
           :class="{ active: route.path === link.path }"
         >
-          {{ link.name }}
+          {{ link.label || t(link.key) }}
           <span v-if="link.path === '/plan' && planCount" class="badge">
             {{ planCount }}
           </span>
@@ -133,19 +136,26 @@ const closeAndLogout = () => {
           <span class="loading">...</span>
         </template>
         <template v-else-if="isAuthorized">
-          <router-link class="cta secondary" to="/profile">
-            Личный кабинет
+          <router-link class="cta secondary" :to="isStaffAdmin ? '/admin/dashboard' : '/profile'">
+            {{ isStaffAdmin ? "Админ-панель" : t("nav.profile") }}
             <span v-if="unreadTotal" class="badge">{{ unreadTotal }}</span>
           </router-link>
-          <button class="cta primary" type="button" @click="closeAndLogout">Выйти</button>
+          <button class="cta primary" type="button" @click="closeAndLogout">
+            {{ t("nav.logout") }}
+          </button>
         </template>
         <template v-else>
-          <router-link class="cta secondary" to="/login">Войти</router-link>
-          <router-link class="cta primary" to="/register">Зарегистрироваться</router-link>
+          <router-link class="cta secondary" to="/login">{{ t("nav.login") }}</router-link>
+          <router-link class="cta primary" to="/register">{{ t("nav.register") }}</router-link>
         </template>
       </div>
 
-      <button class="menu-toggle" type="button" aria-label="Меню" @click="isOpen = !isOpen">
+      <button
+        class="menu-toggle"
+        type="button"
+        :aria-label="t('common.menu')"
+        @click="isOpen = !isOpen"
+      >
         <span :class="{ open: isOpen }"></span>
         <span :class="{ open: isOpen }"></span>
       </button>
@@ -161,7 +171,7 @@ const closeAndLogout = () => {
           :class="{ active: route.path === link.path }"
           @click="closeMenu"
         >
-          {{ link.name }}
+          {{ link.label || t(link.key) }}
           <span v-if="link.path === '/plan' && planCount" class="badge">
             {{ planCount }}
           </span>
@@ -171,16 +181,24 @@ const closeAndLogout = () => {
             <span class="loading">...</span>
           </template>
           <template v-else-if="isAuthorized">
-            <router-link class="cta secondary" to="/profile" @click="closeMenu">
-              Личный кабинет
+            <router-link
+              class="cta secondary"
+              :to="isStaffAdmin ? '/admin/dashboard' : '/profile'"
+              @click="closeMenu"
+            >
+              {{ isStaffAdmin ? "Админ-панель" : t("nav.profile") }}
               <span v-if="unreadTotal" class="badge">{{ unreadTotal }}</span>
             </router-link>
-            <button class="cta primary" type="button" @click="closeAndLogout">Выйти</button>
+            <button class="cta primary" type="button" @click="closeAndLogout">
+              {{ t("nav.logout") }}
+            </button>
           </template>
           <template v-else>
-            <router-link class="cta secondary" to="/login" @click="closeMenu">Войти</router-link>
+            <router-link class="cta secondary" to="/login" @click="closeMenu">
+              {{ t("nav.login") }}
+            </router-link>
             <router-link class="cta primary" to="/register" @click="closeMenu">
-              Зарегистрироваться
+              {{ t("nav.register") }}
             </router-link>
           </template>
         </div>

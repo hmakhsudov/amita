@@ -46,7 +46,8 @@ docker compose exec backend python manage.py createsuperuser
 
 - Frontend: `http://72.56.70.71/`
 - API: `http://72.56.70.71/api/`
-- Admin: `http://72.56.70.71/admin/`
+- Staff panel (SPA): `http://72.56.70.71/admin/`
+- Django admin: `http://72.56.70.71/django-admin/`
 
 Quick checks:
 

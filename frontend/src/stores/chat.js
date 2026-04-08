@@ -7,6 +7,7 @@ import {
   markRead as apiMarkRead,
   sendMessage as apiSendMessage,
 } from "@/api/chat";
+import { i18n } from "@/i18n";
 
 const state = reactive({
   conversations: [],
@@ -31,7 +32,7 @@ const fetchConversations = async () => {
     setConversations(data);
     state.unreadTotal = data.reduce((sum, item) => sum + (item.unread_count || 0), 0);
   } catch (error) {
-    state.error = "Не удалось загрузить сообщения.";
+    state.error = i18n.global.t("messages.loadError");
     throw error;
   } finally {
     state.loadingConversations = false;
@@ -64,7 +65,7 @@ const openConversation = async (counterpartUserId) => {
     await markRead(conv.id);
     return conv;
   } catch (error) {
-    state.error = "Не удалось открыть диалог.";
+    state.error = i18n.global.t("messages.openError");
     throw error;
   }
 };
@@ -76,7 +77,7 @@ const fetchMessages = async (conversationId, params = {}) => {
     const data = await apiFetchMessages(conversationId, params);
     state.messagesByConversation[conversationId] = Array.isArray(data) ? data : [];
   } catch (error) {
-    state.error = "Не удалось загрузить сообщения.";
+    state.error = i18n.global.t("messages.loadError");
     throw error;
   } finally {
     state.loadingMessages = false;
@@ -103,7 +104,7 @@ const sendMessage = async (conversationId, body) => {
     );
     return data;
   } catch (error) {
-    state.error = "Не удалось отправить сообщение.";
+    state.error = i18n.global.t("messages.sendError");
     throw error;
   } finally {
     state.sending = false;

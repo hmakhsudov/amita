@@ -2,12 +2,13 @@
 Root URL configuration for beauty_service.
 
 Routes:
-- /admin/: Django admin for managing services/clients.
+- /django-admin/: Django admin for backend operations.
 - /api/health/: health check endpoint for container monitoring.
 - /api/services/: CRUD services (GET public, write for admins).
 - /api/categories/: CRUD categories (GET public, write for admins).
 - /api/plan/: authenticated user plan endpoints.
 - /api/bookings/: booking endpoints.
+- /api/admin/: staff dashboard and management endpoints.
 - /api/availability/: availability slots endpoint.
 - /api/masters/: list of masters.
 - /api/recommendations/: placeholder recommendations response.
@@ -21,10 +22,12 @@ from django.urls import include, path
 from core import views as core_views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Keep Django admin available under a dedicated backend path.
+    path("django-admin/", admin.site.urls),
     # API routes for the Vue frontend to consume
     path("api/health/", core_views.health, name="health"),
     path("api/recommendations/", core_views.recommendations, name="recommendations"),
+    path("api/admin/", include("core.admin_api_urls")),
     path("api/", include("core.api_urls")),
     path("api/plan/", include("core.plan_urls")),
     path("api/", include("core.booking_urls")),

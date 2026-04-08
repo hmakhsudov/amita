@@ -61,7 +61,7 @@ def _build_catalog(services: List[Service]) -> str:
             master_names.append(profile.full_name if profile and profile.full_name else master.email)
         masters_line = f"Мастера: {', '.join(master_names)}" if master_names else "Мастера: нет"
         lines.append(
-            f"[id={service.id}] {service.name} — категория: {category}; цена: {service.price} ₽; "
+            f"[id={service.id}] {service.name} — категория: {category}; цена: {service.price} €; "
             f"длительность: {service.duration_minutes} мин; {masters_line}. "
             f"Описание: {description or '—'}"
         )

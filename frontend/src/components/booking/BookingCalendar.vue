@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 const props = defineProps({
@@ -7,12 +8,13 @@ const props = defineProps({
   slots: { type: Array, default: () => [] },
   selectedSlot: { type: String, default: "" },
   loading: { type: Boolean, default: false },
-  emptyLabel: { type: String, default: "Выберите услугу и дату." },
+  emptyLabel: { type: String, default: "" },
   disabled: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:date", "select"]);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 
 const slotValue = (slot) => (typeof slot === "string" ? slot : slot.value);
 const slotLabel = (slot) => (typeof slot === "string" ? slot : slot.label);
@@ -21,13 +23,13 @@ const slotLabel = (slot) => (typeof slot === "string" ? slot : slot.label);
 <template>
   <section class="card reveal" :ref="revealRef">
     <div class="section-heading">
-      <p class="tag">Дата и время</p>
-      <h3>Выберите удобное окно</h3>
-      <p class="muted">Календарь и слоты в стиле премиальных сервисов записи.</p>
+      <p class="tag">{{ t("booking.stepDate") }}</p>
+      <h3>{{ t("booking.chooseSlotTitle") }}</h3>
+      <p class="muted">{{ t("booking.chooseSlotHint") }}</p>
     </div>
     <div class="date-field">
       <label>
-        <span>Дата</span>
+        <span>{{ t("booking.dateLabel") }}</span>
         <input
           type="date"
           :value="selectedDate"
@@ -39,10 +41,10 @@ const slotLabel = (slot) => (typeof slot === "string" ? slot : slot.label);
     </div>
     <div class="slots">
       <template v-if="loading">
-        <span class="muted">Загрузка слотов...</span>
+        <span class="muted">{{ t("booking.slotsLoading") }}</span>
       </template>
       <template v-else-if="!slots.length">
-        <span class="muted">{{ emptyLabel }}</span>
+        <span class="muted">{{ emptyLabel || t("booking.selectServiceMaster") }}</span>
       </template>
       <template v-else>
         <button

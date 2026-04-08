@@ -1,10 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useChatStore } from "@/stores/chat";
 import { useAuthStore } from "@/stores/auth";
 
 const chat = useChatStore();
 const auth = useAuthStore();
+const { t } = useI18n();
 const messageInput = ref("");
 const listRef = ref(null);
 const pollTimer = ref(null);
@@ -28,7 +30,7 @@ const formatDate = (value) => {
   return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
 };
 
-const roleLabel = (role) => (role === "admin" ? "Мастер" : "Клиент");
+const roleLabel = (role) => (role === "master" ? t("messages.roleMaster") : t("messages.roleClient"));
 
 const openConversation = async (conversationId) => {
   chat.state.activeConversationId = conversationId;
@@ -119,12 +121,12 @@ onBeforeUnmount(() => {
   <div class="messages-layout">
     <div v-if="showList" class="card inbox">
       <div class="section-heading">
-        <p class="tag">Сообщения</p>
-        <h3>Диалоги</h3>
+        <p class="tag">{{ t("messages.title") }}</p>
+        <h3>{{ t("messages.dialogs") }}</h3>
       </div>
-      <div v-if="chat.state.loadingConversations" class="muted">Загрузка...</div>
+      <div v-if="chat.state.loadingConversations" class="muted">{{ t("common.loading") }}</div>
       <div v-else-if="!chat.state.conversations.length" class="empty muted">
-        Сообщений пока нет. Откройте запись и нажмите «Написать мастеру».
+        {{ t("messages.empty") }}
       </div>
       <div v-else class="list">
         <button
@@ -144,7 +146,7 @@ onBeforeUnmount(() => {
               <strong>{{ conv.counterpart?.name }}</strong>
               <span class="role">{{ roleLabel(conv.counterpart?.role) }}</span>
             </div>
-            <p class="muted">{{ conv.last_message_preview || "Нет сообщений" }}</p>
+            <p class="muted">{{ conv.last_message_preview || t("messages.noMessages") }}</p>
           </div>
           <div class="side">
             <span class="time">{{ formatTime(conv.last_message_at) }}</span>
@@ -156,12 +158,12 @@ onBeforeUnmount(() => {
 
     <div v-if="showChat" class="card chat">
       <div v-if="!chat.state.activeConversationId" class="empty muted">
-        Выберите диалог, чтобы начать переписку.
+        {{ t("messages.selectDialog") }}
       </div>
       <template v-else>
         <div class="chat-header">
           <button v-if="isMobile" type="button" class="back" @click="mobileChatOpen = false">
-            ← Диалоги
+            {{ t("messages.back") }}
           </button>
           <div class="header-main">
             <div class="avatar">
@@ -193,11 +195,11 @@ onBeforeUnmount(() => {
           <input
             v-model="messageInput"
             type="text"
-            placeholder="Напишите сообщение"
+            :placeholder="t('messages.placeholder')"
             :disabled="chat.state.sending"
           />
           <button class="cta primary" type="submit" :disabled="!messageInput.trim()">
-            Отправить
+            {{ t("messages.send") }}
           </button>
         </form>
       </template>
@@ -412,7 +414,7 @@ onBeforeUnmount(() => {
   .inbox,
   .chat {
     height: auto;
-    min-height: 70vh;
+    min-height: calc(100dvh - 260px);
   }
 
   .item {
@@ -420,15 +422,22 @@ onBeforeUnmount(() => {
   }
 
   .messages {
-    min-height: 55vh;
+    min-height: 45vh;
   }
 
   .bubble {
     max-width: 100%;
   }
+
   .composer {
     grid-template-columns: 1fr;
+    gap: 0.45rem;
   }
+
+  .composer input {
+    min-height: 44px;
+  }
+
   .composer .cta {
     width: 100%;
     min-height: 44px;

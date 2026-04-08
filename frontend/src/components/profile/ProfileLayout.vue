@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import ProfileDashboard from "./ProfileDashboard.vue";
 import ProfileFavorites from "./ProfileFavorites.vue";
 import ProfileHistory from "./ProfileHistory.vue";
@@ -15,30 +16,31 @@ import { useFavoritesStore } from "@/stores/favorites";
 import { useChatStore } from "@/stores/chat";
 import { useRoute } from "vue-router";
 
-// TODO: заменить заглушки данными из API профиля
-const clientTabs = [
-  { key: "bookings", label: "Мои записи" },
-  { key: "messages", label: "Сообщения" },
-  { key: "favorites", label: "Избранные услуги" },
-  { key: "history", label: "История посещений" },
-  { key: "profile", label: "Профиль" },
-  // { key: "settings", label: "Настройки" }, НАСТРОЙКИ ВКЛАДКА НАСТРОЕК
-];
-const masterTabs = [
-  { key: "profile", label: "Профиль" },
-  { key: "master-bookings", label: "Записи ко мне" },
-  { key: "master-services", label: "Мои услуги" },
-  { key: "messages", label: "Сообщения" },
-];
-
 const route = useRoute();
 const auth = useAuthStore();
 const bookingsStore = useBookingsStore();
 const favoritesStore = useFavoritesStore();
 const chatStore = useChatStore();
+const { t } = useI18n();
 
-const isMaster = computed(() => auth.state.user?.role === "admin");
-const tabs = computed(() => (isMaster.value ? masterTabs : clientTabs));
+const isMaster = computed(() => auth.state.user?.role === "master");
+const tabs = computed(() => {
+  if (isMaster.value) {
+    return [
+      { key: "profile", label: t("profile.tabs.profile") },
+      { key: "master-bookings", label: t("profile.tabs.masterBookings") },
+      { key: "master-services", label: t("profile.tabs.masterServices") },
+      { key: "messages", label: t("profile.tabs.messages") },
+    ];
+  }
+  return [
+    { key: "bookings", label: t("profile.tabs.bookings") },
+    { key: "messages", label: t("profile.tabs.messages") },
+    { key: "favorites", label: t("profile.tabs.favorites") },
+    { key: "history", label: t("profile.tabs.history") },
+    { key: "profile", label: t("profile.tabs.profile") },
+  ];
+});
 const allowedTabs = computed(() => tabs.value.map((tab) => tab.key));
 const defaultTab = computed(() => (isMaster.value ? "master-bookings" : "bookings"));
 const active = ref(defaultTab.value);
@@ -138,11 +140,11 @@ const handleStatus = async ({ id, status }) => {
     await bookingsStore.updateStatus(id, status);
     const label =
       status === "completed"
-        ? "Выполнено"
+        ? t("bookings.completed")
         : status === "cancelled"
-          ? "Отменено"
-          : "Ожидается";
-    statusToast.value = `Статус изменён: ${label}`;
+          ? t("bookings.cancelled")
+          : t("bookings.pending");
+    statusToast.value = t("profile.statusChanged", { status: label });
     setTimeout(() => {
       statusToast.value = "";
     }, 2000);
@@ -268,6 +270,10 @@ onBeforeUnmount(() => {
   gap: 1rem;
 }
 
+.content {
+  min-width: 0;
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
@@ -276,6 +282,11 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .layout {
+    gap: 0.8rem;
+  }
+
+  .content {
+    display: grid;
     gap: 0.8rem;
   }
 }

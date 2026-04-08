@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 import { useAuthStore } from "@/stores/auth";
 import { usePlanStore } from "@/stores/plan";
@@ -11,7 +12,6 @@ const form = ref({
   email: "",
   password: "",
   confirm: "",
-  role: "client",
 });
 const submitted = ref(false);
 const error = ref("");
@@ -19,15 +19,16 @@ const { revealRef } = useReveal();
 const auth = useAuthStore();
 const plan = usePlanStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const submit = async () => {
   error.value = "";
   if (form.value.password.length < 8) {
-    error.value = "Пароль должен быть не короче 8 символов.";
+    error.value = t("auth.passwordShort");
     return;
   }
   if (form.value.password !== form.value.confirm) {
-    error.value = "Пароли не совпадают.";
+    error.value = t("auth.passwordMismatch");
     return;
   }
   try {
@@ -36,9 +37,9 @@ const submit = async () => {
       phone: form.value.phone,
       email: form.value.email,
       password: form.value.password,
-      role: form.value.role,
+      role: "client",
     });
-    if (auth.state.user?.role !== "admin") {
+    if (auth.state.user?.role === "client") {
       try {
         await plan.fetchPlan();
       } catch (planError) {
@@ -50,7 +51,7 @@ const submit = async () => {
     submitted.value = true;
     router.push("/profile");
   } catch (err) {
-    error.value = auth.state.error || "Не удалось зарегистрироваться.";
+    error.value = auth.state.error || t("auth.registerError");
   }
 };
 </script>
@@ -58,53 +59,40 @@ const submit = async () => {
 <template>
   <section class="page">
     <div class="card auth-card reveal" :ref="revealRef">
-      <p class="tag">Регистрация</p>
-      <h1>Создайте аккаунт</h1>
+      <p class="tag">{{ t("auth.registerTitle") }}</p>
+      <h1>{{ t("auth.registerTitle") }}</h1>
       <form class="form" @submit.prevent="submit">
         <label>
-          <span>Имя</span>
-          <input v-model="form.name" type="text" placeholder="Ваше имя" required />
+          <span>{{ t("auth.name") }}</span>
+          <input v-model="form.name" type="text" :placeholder="t('booking.namePlaceholder')" required />
         </label>
         <label>
-          <span>Телефон</span>
-          <input v-model="form.phone" type="tel" placeholder="+43 (___) ___-__-__" required />
+          <span>{{ t("auth.phone") }}</span>
+          <input v-model="form.phone" type="tel" :placeholder="t('booking.phonePlaceholder')" required />
         </label>
         <label>
-          <span>Email</span>
-          <input v-model="form.email" type="email" placeholder="you@example.com" required />
-        </label>
-        <label class="full">
-          <span>Роль</span>
-          <div class="roles">
-            <label class="radio">
-              <input v-model="form.role" type="radio" value="client" />
-              <span>Клиент</span>
-            </label>
-            <label class="radio">
-              <input v-model="form.role" type="radio" value="admin" />
-              <span>Администратор</span>
-            </label>
-          </div>
+          <span>{{ t("auth.email") }}</span>
+          <input v-model="form.email" type="email" :placeholder="t('auth.emailPlaceholder')" required />
         </label>
         <label>
-          <span>Пароль</span>
-          <input v-model="form.password" type="password" placeholder="••••••••" required />
+          <span>{{ t("auth.password") }}</span>
+          <input v-model="form.password" type="password" :placeholder="t('auth.passwordPlaceholder')" required />
         </label>
         <label>
-          <span>Подтверждение пароля</span>
-          <input v-model="form.confirm" type="password" placeholder="••••••••" required />
+          <span>{{ t("auth.passwordConfirm") }}</span>
+          <input v-model="form.confirm" type="password" :placeholder="t('auth.passwordPlaceholder')" required />
         </label>
         <p v-if="error" class="error">{{ error }}</p>
         <button class="cta primary" type="submit" :disabled="auth.state.loading">
-          {{ auth.state.loading ? "Создание..." : "Создать аккаунт" }}
+          {{ auth.state.loading ? t("auth.loadingRegister") : t("auth.registerBtn") }}
         </button>
       </form>
       <div class="links">
-        <router-link to="/login">Уже есть аккаунт? Войти</router-link>
+        <router-link to="/login">{{ t("auth.haveAccount") }}</router-link>
       </div>
       <div v-if="submitted" class="after">
-        <p class="muted">Регистрация выполнена. Добро пожаловать!</p>
-        <router-link class="cta secondary" to="/profile">Перейти в личный кабинет</router-link>
+        <p class="muted">{{ t("auth.registerSuccess") }}</p>
+        <router-link class="cta secondary" to="/profile">{{ t("auth.toProfile") }}</router-link>
       </div>
     </div>
   </section>
@@ -141,26 +129,6 @@ input {
   padding: 0.75rem 0.9rem;
 }
 
-.roles {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.radio {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(52, 95, 32, 0.18);
-  border-radius: 12px;
-  padding: 0.5rem 0.8rem;
-  background: #fff;
-}
-
-.full {
-  grid-column: 1 / -1;
-}
-
 .error {
   color: #8a1a1a;
   font-weight: 600;
@@ -174,5 +142,25 @@ input {
   margin-top: 1rem;
   display: grid;
   gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .form .cta {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .after .cta {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 </style>

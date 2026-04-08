@@ -1,7 +1,12 @@
 <script setup>
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { RouterView } from "vue-router";
 import BaseFooter from "@/components/BaseFooter.vue";
 import BaseHeader from "@/components/BaseHeader.vue";
+
+const route = useRoute();
+const isAdminRoute = computed(() => route.path.startsWith("/admin"));
 </script>
 
 <template>
@@ -9,15 +14,15 @@ import BaseHeader from "@/components/BaseHeader.vue";
     <div class="bg-accent">
       <img src="@/assets/hero-bg-pattern.svg" alt="" aria-hidden="true" />
     </div>
-    <BaseHeader />
-    <main class="page">
+    <BaseHeader v-if="!isAdminRoute" />
+    <main class="page" :class="{ 'page-admin': isAdminRoute }">
       <RouterView v-slot="{ Component, route }">
         <Transition name="page" mode="out-in">
           <component :is="Component" :key="route.fullPath" />
         </Transition>
       </RouterView>
     </main>
-    <BaseFooter />
+    <BaseFooter v-if="!isAdminRoute" />
   </div>
 </template>
 
@@ -50,6 +55,11 @@ import BaseHeader from "@/components/BaseHeader.vue";
   max-width: 1200px;
   margin: 0 auto;
   padding: 1.25rem 1.25rem 4rem;
+}
+
+.page.page-admin {
+  max-width: 100%;
+  padding: 0;
 }
 
 .page-enter-active,

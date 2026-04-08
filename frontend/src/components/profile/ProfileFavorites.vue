@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import fallbackPhoto from "@/assets/salon-6.jpg";
 
 const props = defineProps({
@@ -8,13 +9,14 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["remove"]);
+const { t } = useI18n();
 </script>
 
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">Избранное</p>
-      <h3>Любимые услуги</h3>
+      <p class="tag">{{ t("profile.tabs.favorites") }}</p>
+      <h3>{{ t("favorites.title") }}</h3>
     </div>
 
     <div v-if="loading" class="grid">
@@ -22,24 +24,24 @@ const emit = defineEmits(["remove"]);
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="!favorites.length" class="empty muted">
-      Пока нет избранных услуг.
+      {{ t("favorites.empty") }}
     </div>
 
     <div v-else class="grid">
       <article v-for="item in favorites" :key="item.id" class="fav">
         <div>
           <h4>{{ item.service?.name }}</h4>
-          <p class="muted">{{ item.service?.category?.name || "Без категории" }}</p>
-          <p class="muted">{{ item.service?.price }} ₽</p>
+          <p class="muted">{{ item.service?.category?.name || t("services.uncategorized") }}</p>
+          <p class="muted">{{ item.service?.price }} €</p>
           <div class="actions">
             <router-link
               class="cta secondary"
               :to="{ path: '/booking', query: { serviceId: item.service?.id } }"
             >
-              Записаться
+              {{ t("favorites.book") }}
             </router-link>
             <button class="cta secondary" type="button" @click="emit('remove', item.id)">
-              Удалить
+              {{ t("favorites.remove") }}
             </button>
           </div>
         </div>
@@ -106,6 +108,10 @@ const emit = defineEmits(["remove"]);
 }
 
 @media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
   .fav {
     grid-template-columns: 1fr;
   }

@@ -1,21 +1,22 @@
 <script setup>
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 // TODO: заменить на реальные фото из брендбука (авокадо, напитки, брендовые предметы)
 import salonOne from "@/assets/salon-1.jpg";
 import salonTwo from "@/assets/salon-2.jpg";
 import salonThree from "@/assets/salon-3.jpg";
-import salonFive from "@/assets/salon-5.jpg";
-import salonSix from "@/assets/salon-6.jpg";
-import salonSeven from "@/assets/salon-7.jpg";
 import heroMain from "@/assets/hero-main.jpg";
 
-const items = [
-  { title: "Матча-коктейли", src: salonOne },
-  { title: "Уютные кресла", src: salonTwo },
-  { title: "Фирменные напитки", src: salonThree },
-  { title: "Девушки с смузи", src: heroMain },
-];
+const { t } = useI18n();
+
+const items = computed(() => [
+  { title: t("home.galleryItems.matcha"), src: salonOne },
+  { title: t("home.galleryItems.chairs"), src: salonTwo },
+  { title: t("home.galleryItems.signatureDrinks"), src: salonThree },
+  { title: t("home.galleryItems.smoothie"), src: heroMain },
+]);
 
 const { revealRef } = useReveal();
 </script>
@@ -23,12 +24,17 @@ const { revealRef } = useReveal();
 <template>
   <section class="section">
     <div class="section-heading reveal" :ref="revealRef">
-      <p class="tag">Галерея</p>
-      <h2>Пространство, напитки и детали бренда</h2>
-      <p class="muted">Лайтовые тона, акцентные matcha/avocado детали, мягкий свет.</p>
+      <p class="tag">{{ t("home.galleryTitle") }}</p>
+      <h2>{{ t("home.galleryHeadline") }}</h2>
+      <p class="muted">{{ t("home.gallerySubtitle") }}</p>
     </div>
     <div class="gallery-grid">
-      <figure v-for="item in items" :key="item.title" class="gallery-item reveal" :ref="revealRef">
+      <figure
+        v-for="item in items"
+        :key="item.title"
+        class="gallery-item reveal"
+        :ref="revealRef"
+      >
         <img :src="item.src" :alt="item.title" />
         <figcaption>{{ item.title }}</figcaption>
       </figure>
@@ -75,5 +81,16 @@ const { revealRef } = useReveal();
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.42));
   color: #fff;
   font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .gallery-item img {
+    height: 200px;
+  }
 }
 </style>

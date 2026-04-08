@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import BookingCalendar from "@/components/booking/BookingCalendar.vue";
 import BookingForm from "@/components/booking/BookingForm.vue";
 import BookingMasterStep from "@/components/booking/BookingMasterStep.vue";
@@ -12,7 +13,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useBookingsStore } from "@/stores/bookings";
 import { useRoute, useRouter } from "vue-router";
 
-const categories = ref(["Все"]);
+const categoryNames = ref([]);
 const services = ref([]);
 const servicesLoading = ref(false);
 const servicesError = ref("");
@@ -23,7 +24,7 @@ const slotsError = ref("");
 const toast = ref("");
 
 const state = ref({
-  category: "Все",
+  category: "all",
   serviceId: null,
   masterId: null,
   date: "",
@@ -37,6 +38,12 @@ const auth = useAuthStore();
 const bookings = useBookingsStore();
 const router = useRouter();
 const route = useRoute();
+const { t, locale } = useI18n();
+
+const categories = computed(() => [
+  { value: "all", label: t("services.all") },
+  ...categoryNames.value.map((name) => ({ value: name, label: name })),
+]);
 
 const today = () => new Date().toISOString().slice(0, 10);
 state.value.date = today();
@@ -55,12 +62,12 @@ const selectedSlotLabel = computed(() => {
 
 const formatTime = (iso) => {
   const date = new Date(iso);
-  return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" });
 };
 
 const formatDateLabel = (iso) => {
   const date = new Date(iso);
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale.value, {
     day: "2-digit",
     month: "long",
   });
@@ -75,15 +82,14 @@ const loadServices = async () => {
       ? data.map((item) => ({
           id: item.id,
           name: item.name,
-          category: item.category?.name || item.category_name || "Без категории",
-          description: item.description || "Описание появится после подключения каталога.",
+          category: item.category?.name || item.category_name || t("services.uncategorized"),
+          description: item.description || t("services.descFallback"),
           duration: item.duration_minutes || 60,
           price: item.price,
           masters: Array.isArray(item.masters) ? item.masters : [],
         }))
       : [];
-    const uniq = new Set(services.value.map((service) => service.category));
-    categories.value = ["Все", ...uniq];
+    categoryNames.value = [...new Set(services.value.map((service) => service.category))];
     const preselectId = Number(route.query.serviceId);
     if (preselectId && !state.value.serviceId) {
       const preselected = services.value.find((service) => service.id === preselectId);
@@ -93,7 +99,7 @@ const loadServices = async () => {
       }
     }
   } catch (error) {
-    servicesError.value = "Не удалось загрузить услуги. Попробуйте позже.";
+    servicesError.value = t("services.loadError");
   } finally {
     servicesLoading.value = false;
   }
@@ -119,7 +125,7 @@ const loadAvailability = async () => {
     }));
   } catch (error) {
     slotsError.value =
-      error.response?.data?.detail || "Не удалось загрузить слоты. Попробуйте позже.";
+      error.response?.data?.detail || t("booking.slotsError");
   } finally {
     slotsLoading.value = false;
   }
@@ -127,7 +133,7 @@ const loadAvailability = async () => {
 
 const confirmBooking = async () => {
   if (!auth.isAuthenticated.value) {
-    toast.value = "Войдите, чтобы записаться.";
+    toast.value = t("booking.loginToBook");
     setTimeout(() => {
       toast.value = "";
       router.push("/login");
@@ -135,7 +141,7 @@ const confirmBooking = async () => {
     return;
   }
   if (!chosenService.value || !state.value.masterId || !state.value.slot) {
-    toast.value = "Выберите услугу, мастера и время.";
+    toast.value = t("booking.selectAll");
     setTimeout(() => {
       toast.value = "";
     }, 1600);
@@ -152,13 +158,13 @@ const confirmBooking = async () => {
       client_email: state.value.form.email,
     });
     state.value.confirmed = true;
-    toast.value = "Запись создана.";
+    toast.value = t("booking.created");
     setTimeout(() => {
       toast.value = "";
       router.push({ path: "/profile", query: { tab: "bookings" } });
     }, 1200);
   } catch (error) {
-    toast.value = bookings.state.error || "Не удалось создать запись.";
+    toast.value = bookings.state.error || t("booking.createError");
     setTimeout(() => {
       toast.value = "";
     }, 2000);
@@ -204,15 +210,13 @@ onMounted(loadServices);
   <div class="page">
     <div class="top reveal" :ref="revealRef">
       <div>
-        <p class="tag">Онлайн-запись</p>
-        <h1>Выберите услугу и время</h1>
-        <p class="muted">
-          Выберите нужную вам услугу и мастера и запишитесь онлайн
-        </p>
+        <p class="tag">{{ t("nav.booking") }}</p>
+        <h1>{{ t("booking.title") }}</h1>
+        <p class="muted">{{ t("booking.subtitle") }}</p>
       </div>
       <div class="card note">
-        <strong>Как это работает</strong>
-        <p class="muted">1) Категория → услуга → мастер → дата/время → контакты → подтверждение.</p>
+        <strong>{{ t("home.howTitle") }}</strong>
+        <p class="muted">{{ t("booking.flow") }}</p>
       </div>
     </div>
 
@@ -226,7 +230,7 @@ onMounted(loadServices);
           @update:category="state.category = $event"
           @select="(svc) => (state.serviceId = svc.id)"
         />
-        <div v-if="servicesLoading" class="card note">Загрузка услуг...</div>
+        <div v-if="servicesLoading" class="card note">{{ t("common.loading") }}</div>
         <div v-else-if="servicesError" class="card note error">{{ servicesError }}</div>
         <BookingMasterStep
           :masters="masters"
@@ -246,8 +250,8 @@ onMounted(loadServices);
           :empty-label="
             slotsError ||
             (state.serviceId && state.masterId
-              ? 'На выбранную дату нет свободных окон.'
-              : 'Выберите услугу и мастера.')
+              ? t('booking.noSlots')
+              : t('booking.selectServiceMaster'))
           "
           @update:date="state.date = $event"
           @select="(slot) => (state.slot = slot)"

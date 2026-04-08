@@ -6,9 +6,11 @@ import uuid
 class UserProfile(models.Model):
     ROLE_CLIENT = "client"
     ROLE_ADMIN = "admin"
+    ROLE_MASTER = "master"
     ROLE_CHOICES = [
         (ROLE_CLIENT, "Клиент"),
         (ROLE_ADMIN, "Администратор"),
+        (ROLE_MASTER, "Мастер"),
     ]
 
     user = models.OneToOneField(
@@ -51,7 +53,7 @@ class Service(models.Model):
         settings.AUTH_USER_MODEL,
         related_name="services",
         blank=True,
-        limit_choices_to={"profile__role": UserProfile.ROLE_ADMIN},
+        limit_choices_to={"profile__role": UserProfile.ROLE_MASTER},
     )
     description = models.TextField(blank=True)
     duration_minutes = models.PositiveIntegerField(default=60)
@@ -243,7 +245,7 @@ class Booking(models.Model):
         related_name="master_bookings",
         blank=True,
         null=True,
-        limit_choices_to={"profile__role": UserProfile.ROLE_ADMIN},
+        limit_choices_to={"profile__role": UserProfile.ROLE_MASTER},
     )
     service = models.ForeignKey(Service, on_delete=models.PROTECT)
     start_at = models.DateTimeField(db_index=True)

@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 // TODO: заменить на фото из брендбука (девушки с напитками, стр. 1)
@@ -8,6 +9,7 @@ import fruitPattern from "@/assets/fruit-pattern.svg";
 
 const textRef = ref(null);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 
 onMounted(() => {
   // Connect the text block to the reveal animation
@@ -18,20 +20,17 @@ onMounted(() => {
 <template>
   <section class="hero">
     <div class="hero-bg">
-      <img :src="heroImage" alt="Герой — девушки с напитками" />
+      <img :src="heroImage" :alt="t('home.heroImageAlt')" />
       <div class="overlay"></div>
       <div class="grain"></div>
       <img class="pattern" :src="fruitPattern" alt="" aria-hidden="true" />
     </div>
     <div class="hero-content reveal" ref="textRef">
-      <p class="pill">Натуральная красота и здоровый ритм</p>
-      <h1>BIZU — салон красоты и здорового образа жизни</h1>
-      <p class="lead">
-        Салон красоты и здорового образа жизни с мягкими avocado/matcha акцентами. Технологии
-        рекомендаций + заботливые мастера.
-      </p>
+      <p class="pill">{{ t("home.heroPill") }}</p>
+      <h1>{{ t("home.heroHeadline") }}</h1>
+      <p class="lead">{{ t("home.heroLead") }}</p>
       <div class="actions">
-        <router-link class="cta primary" to="/booking">Записаться онлайн</router-link>
+        <router-link class="cta primary" to="/booking">{{ t("home.heroCta") }}</router-link>
       </div>
     </div>
   </section>

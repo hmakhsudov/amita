@@ -20,11 +20,20 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, min_length=8)
     name = serializers.CharField()
     phone = serializers.CharField(required=False, allow_blank=True)
-    role = serializers.ChoiceField(choices=UserProfile.ROLE_CHOICES)
+    role = serializers.ChoiceField(
+        choices=UserProfile.ROLE_CHOICES,
+        required=False,
+        default=UserProfile.ROLE_CLIENT,
+    )
 
     def validate_email(self, value: str) -> str:
         if User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("Пользователь с таким email уже существует.")
+        return value
+
+    def validate_role(self, value: str) -> str:
+        if value != UserProfile.ROLE_CLIENT:
+            raise serializers.ValidationError("Регистрация администраторов отключена.")
         return value
 
     def create(self, validated_data):
@@ -38,7 +47,7 @@ class RegisterSerializer(serializers.Serializer):
             user=user,
             full_name=validated_data.get("name", ""),
             phone=validated_data.get("phone", ""),
-            role=validated_data["role"],
+            role=UserProfile.ROLE_CLIENT,
         )
         return user
 
@@ -93,7 +102,7 @@ class UserMeUpdateSerializer(serializers.Serializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceCategory
-        fields = ["id", "name"]
+        fields = ["id", "name", "description"]
 
 
 class MasterSerializer(serializers.ModelSerializer):
@@ -135,7 +144,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     )
     masters = MasterSerializer(many=True, read_only=True)
     masters_ids = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(profile__role=UserProfile.ROLE_ADMIN),
+        queryset=User.objects.filter(profile__role=UserProfile.ROLE_MASTER),
         source="masters",
         many=True,
         write_only=True,
@@ -267,7 +276,7 @@ class BookingCreateSerializer(serializers.Serializer):
         source="service",
     )
     master_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(profile__role=UserProfile.ROLE_ADMIN),
+        queryset=User.objects.filter(profile__role=UserProfile.ROLE_MASTER),
         source="master",
     )
     start_at = serializers.DateTimeField()
@@ -298,3 +307,45 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ["id", "sender_id", "body", "created_at", "read_at"]
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+    phone = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "name",
+            "phone",
+            "role",
+            "avatar_url",
+            "is_active",
+            "date_joined",
+        ]
+
+    def get_name(self, obj):
+        profile = getattr(obj, "profile", None)
+        if profile and profile.full_name:
+            return profile.full_name
+        return obj.get_full_name() or obj.email
+
+    def get_phone(self, obj):
+        profile = getattr(obj, "profile", None)
+        return profile.phone if profile else ""
+
+    def get_role(self, obj):
+        profile = getattr(obj, "profile", None)
+        return profile.role if profile else ""
+
+    def get_avatar_url(self, obj):
+        profile = getattr(obj, "profile", None)
+        if not profile or not profile.avatar:
+            return ""
+        request = self.context.get("request")
+        url = profile.avatar.url
+        return request.build_absolute_uri(url) if request else url

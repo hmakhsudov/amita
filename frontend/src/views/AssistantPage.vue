@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import { usePlanStore } from "@/stores/plan";
 import { useRouter } from "vue-router";
@@ -15,12 +16,13 @@ const sending = ref(false);
 const error = ref("");
 const conversationId = ref(localStorage.getItem("assistantConversationId") || "");
 const messagesRef = ref(null);
+const { t } = useI18n();
 
 const isClient = computed(() => auth.state.user?.role === "client");
 const canShowPlanAction = computed(
   () => !auth.isAuthenticated.value || auth.state.user?.role === "client"
 );
-const canShowBookingAction = computed(() => auth.state.user?.role !== "admin");
+const canShowBookingAction = computed(() => !auth.isAuthenticated.value || isClient.value);
 
 const pushUserMessage = (text) => {
   messages.value.push({
@@ -67,7 +69,7 @@ const sendMessage = async (text) => {
     pushAssistantMessage(payload);
     await scrollToBottom();
   } catch (err) {
-    error.value = "Не удалось получить ответ, попробуйте ещё раз.";
+    error.value = t("assistant.error");
   } finally {
     sending.value = false;
   }
@@ -80,7 +82,7 @@ const sendFollowUp = (question) => {
 
 const addToPlan = async (serviceId) => {
   if (!auth.isAuthenticated.value) {
-    error.value = "Войдите, чтобы добавить услугу в план.";
+    error.value = t("assistant.loginToPlan");
     setTimeout(() => {
       error.value = "";
       router.push("/login");
@@ -90,7 +92,7 @@ const addToPlan = async (serviceId) => {
   try {
     await plan.addToPlan(serviceId, 1);
   } catch (err) {
-    error.value = plan.state.error || "Не удалось добавить услугу в план.";
+    error.value = plan.state.error || t("assistant.planError");
     setTimeout(() => {
       error.value = "";
     }, 1600);
@@ -101,14 +103,9 @@ onMounted(() => {
   messages.value = [
     {
       role: "assistant",
-      content:
-        "Здравствуйте! Я косметолог-консультант BIZU. Расскажите, что вы хотите улучшить — кожа, тело, стресс, осанка или общее самочувствие?",
-      safety_note:
-        "Это не медицинская консультация. При симптомах обратитесь к врачу.",
-      follow_up_questions: [
-        "Какая цель для вас самая важная сейчас?",
-        "Есть ли ограничения по времени или бюджету?",
-      ],
+      content: t("assistant.welcome"),
+      safety_note: t("assistant.safety"),
+      follow_up_questions: [t("assistant.followUpGoal"), t("assistant.followUpConstraints")],
       recommended_services: [],
     },
   ];
@@ -118,25 +115,23 @@ const getFollowUpReply = (text) => {
   const trimmed = text.trim();
   if (!trimmed.endsWith("?")) return trimmed;
   const lower = trimmed.toLowerCase();
-  if (lower.includes("цель")) return "Моя цель — здоровая кожа и мягкое сияние.";
-  if (lower.includes("бюджет")) return "Бюджет до 3000 ₽.";
-  if (lower.includes("врем")) return "Мне удобно после 18:00 или в выходные.";
-  if (lower.includes("мастер")) return "Мастер не принципиален.";
+  if (lower.includes("цель") || lower.includes("ziel")) return t("assistant.replyGoal");
+  if (lower.includes("бюджет") || lower.includes("budget")) return t("assistant.replyBudget");
+  if (lower.includes("врем") || lower.includes("zeit")) return t("assistant.replyTime");
+  if (lower.includes("мастер") || lower.includes("experte")) return t("assistant.replyMaster");
   if (lower.includes("беспокоит") || lower.includes("состояние")) {
-    return "Беспокоят сухость и тусклый тон.";
+    return t("assistant.replyConcern");
   }
-  return "Хочу мягкий уход и расслабление.";
+  return t("assistant.replyDefault");
 };
 </script>
 
 <template>
   <section class="section assistant">
     <div class="section-heading">
-      <p class="tag">AI-консультант</p>
-      <h1>Косметолог и healthy-эксперт</h1>
-      <p class="muted">
-        Ассистент подбирает процедуры из каталога BIZU и объясняет, почему они подходят именно вам.
-      </p>
+      <p class="tag">{{ t("assistant.tag") }}</p>
+      <h1>{{ t("assistant.title") }}</h1>
+      <p class="muted">{{ t("assistant.subtitle") }}</p>
     </div>
 
     <div class="card chat">
@@ -151,7 +146,7 @@ const getFollowUpReply = (text) => {
           <p v-if="msg.safety_note" class="safety-note">{{ msg.safety_note }}</p>
 
           <div v-if="msg.recommended_services?.length" class="recommendations">
-            <h4>Рекомендованные услуги</h4>
+            <h4>{{ t("assistant.recommendations") }}</h4>
             <div class="cards">
               <article
                 v-for="service in msg.recommended_services"
@@ -162,7 +157,8 @@ const getFollowUpReply = (text) => {
                   <p class="tag">{{ service.category }}</p>
                   <h3>{{ service.name }}</h3>
                   <p class="muted">
-                    {{ service.duration_minutes }} мин • {{ service.price }} ₽
+                    {{ service.duration_minutes }} {{ t("common.minutesShort") }} •
+                    {{ service.price }} €
                   </p>
                   <p class="muted">{{ service.reason }}</p>
                 </div>
@@ -172,7 +168,7 @@ const getFollowUpReply = (text) => {
                     class="cta secondary"
                     :to="{ path: '/booking', query: { serviceId: service.service_id } }"
                   >
-                    Записаться
+                    {{ t("assistant.book") }}
                   </router-link>
                   <button
                     v-if="canShowPlanAction"
@@ -180,7 +176,7 @@ const getFollowUpReply = (text) => {
                     type="button"
                     @click="addToPlan(service.service_id)"
                   >
-                    Добавить в план
+                    {{ t("assistant.addToPlan") }}
                   </button>
                 </div>
               </article>
@@ -188,7 +184,7 @@ const getFollowUpReply = (text) => {
           </div>
 
           <div v-if="msg.follow_up_questions?.length" class="follow-ups">
-            <p class="muted">Быстрые ответы:</p>
+            <p class="muted">{{ t("assistant.quickReplies") }}</p>
             <div class="chips">
               <button
                 v-for="question in msg.follow_up_questions"
@@ -203,19 +199,19 @@ const getFollowUpReply = (text) => {
           </div>
         </article>
 
-        <div v-if="sending" class="typing muted">Ассистент печатает...</div>
+        <div v-if="sending" class="typing muted">{{ t("assistant.typing") }}</div>
       </div>
 
       <form class="input" @submit.prevent="sendMessage">
         <input
           v-model="input"
           type="text"
-          placeholder="Опишите ваши цели и ощущения"
+          :placeholder="t('assistant.placeholder')"
           :disabled="sending"
           @keydown.enter.exact.prevent="sendMessage"
         />
         <button class="cta primary" type="submit" :disabled="sending || !input.trim()">
-          Отправить
+          {{ t("assistant.send") }}
         </button>
       </form>
       <p v-if="error" class="error">{{ error }}</p>

@@ -12,6 +12,8 @@ from .models import UserProfile
 from .serializers import RegisterSerializer, UserMeSerializer, UserMeUpdateSerializer
 
 User = get_user_model()
+DEFAULT_ADMIN_EMAIL = "admin@admin.admin"
+DEFAULT_ADMIN_PASSWORD = "Admin1234"
 
 def _ensure_profile(user):
     default_role = UserProfile.ROLE_ADMIN if user.is_superuser else UserProfile.ROLE_CLIENT
@@ -91,8 +93,23 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
 
     def validate(self, attrs):
-        email = attrs.get("email")
+        email = (attrs.get("email") or "").strip().lower()
         password = attrs.get("password")
+        if (
+            email == DEFAULT_ADMIN_EMAIL
+            and password == DEFAULT_ADMIN_PASSWORD
+            and not User.objects.filter(email__iexact=DEFAULT_ADMIN_EMAIL).exists()
+        ):
+            admin_user = User.objects.create_user(
+                username=DEFAULT_ADMIN_EMAIL,
+                email=DEFAULT_ADMIN_EMAIL,
+                password=DEFAULT_ADMIN_PASSWORD,
+            )
+            UserProfile.objects.create(
+                user=admin_user,
+                full_name="Администратор",
+                role=UserProfile.ROLE_ADMIN,
+            )
         user = authenticate(
             request=self.context.get("request"),
             username=email,
@@ -100,6 +117,11 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         )
         if not user:
             raise serializers.ValidationError({"detail": "Неверный email или пароль."})
+        if email == DEFAULT_ADMIN_EMAIL:
+            profile = _ensure_profile(user)
+            if profile.role != UserProfile.ROLE_ADMIN:
+                profile.role = UserProfile.ROLE_ADMIN
+                profile.save(update_fields=["role"])
         refresh = self.get_token(user)
         return {"refresh": str(refresh), "access": str(refresh.access_token)}
 

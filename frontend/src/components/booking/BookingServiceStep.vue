@@ -1,19 +1,21 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 const props = defineProps({
   categories: { type: Array, default: () => [] },
   services: { type: Array, default: () => [] },
-  selectedCategory: { type: String, default: "Все" },
+  selectedCategory: { type: String, default: "all" },
   selectedServiceId: { type: Number, default: null },
 });
 
 const emit = defineEmits(["update:category", "select"]);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 
 const filtered = computed(() => {
-  if (props.selectedCategory === "Все") return props.services;
+  if (props.selectedCategory === "all") return props.services;
   return props.services.filter((s) => s.category === props.selectedCategory);
 });
 </script>
@@ -22,20 +24,20 @@ const filtered = computed(() => {
   <section class="card reveal" :ref="revealRef">
     <div class="header">
       <div>
-        <p class="tag">Выбор услуги</p>
-        <h3>Категории</h3>
-        <p class="muted">Сначала выберите категорию, затем услугу.</p>
+        <p class="tag">{{ t("booking.stepService") }}</p>
+        <h3>{{ t("services.filterLabel") }}</h3>
+        <p class="muted">{{ t("booking.serviceHint") }}</p>
       </div>
       <div class="categories">
         <button
           v-for="cat in categories"
-          :key="cat"
+          :key="cat.value"
           class="chip"
-          :class="{ active: cat === selectedCategory }"
+          :class="{ active: cat.value === selectedCategory }"
           type="button"
-          @click="emit('update:category', cat)"
+          @click="emit('update:category', cat.value)"
         >
-          {{ cat }}
+          {{ cat.label }}
         </button>
       </div>
     </div>
@@ -53,9 +55,9 @@ const filtered = computed(() => {
           <p class="muted">{{ service.description }}</p>
         </div>
         <div class="meta">
-          <span class="pill">{{ service.duration }} мин</span>
-          <strong>{{ service.price }} ₽</strong>
-          <button class="cta secondary" type="button">Выбрать</button>
+          <span class="pill">{{ service.duration }} {{ t("common.minutesShort") }}</span>
+          <strong>{{ service.price }} €</strong>
+          <button class="cta secondary" type="button">{{ t("booking.choose") }}</button>
         </div>
       </article>
     </div>
@@ -128,7 +130,7 @@ const filtered = computed(() => {
   min-width: 160px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .service {
     flex-direction: column;
     align-items: flex-start;

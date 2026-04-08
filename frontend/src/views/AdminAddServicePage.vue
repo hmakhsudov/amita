@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { fetchCategories, createService } from "@/api/services";
 import { useAuthStore } from "@/stores/auth";
@@ -8,6 +9,7 @@ import { useReveal } from "@/composables/useReveal";
 const router = useRouter();
 const auth = useAuthStore();
 const { revealRef } = useReveal();
+const { t } = useI18n();
 
 const form = ref({
   name: "",
@@ -28,7 +30,7 @@ const loadCategories = async () => {
     const data = await fetchCategories();
     categories.value = data;
   } catch (err) {
-    error.value = "Не удалось загрузить категории.";
+    error.value = t("admin.categoriesError");
   }
 };
 
@@ -36,7 +38,7 @@ const submit = async () => {
   error.value = "";
   success.value = "";
   if (!form.value.name || !form.value.price || !form.value.category_id) {
-    error.value = "Заполните обязательные поля.";
+    error.value = t("admin.requiredFields");
     return;
   }
   loading.value = true;
@@ -48,13 +50,13 @@ const submit = async () => {
       category_id: form.value.category_id,
       masters_ids: form.value.selfAssigned ? [auth.state.user?.id].filter(Boolean) : [],
     });
-    success.value = "Услуга добавлена.";
+    success.value = t("admin.success");
     form.value = { name: "", description: "", price: "", category_id: "", selfAssigned: true };
   } catch (err) {
     if (err.response?.status === 401 || err.response?.status === 403) {
-      error.value = "Недостаточно прав для добавления услуги.";
+      error.value = t("admin.noAccess");
     } else {
-      error.value = "Ошибка сохранения. Проверьте данные.";
+      error.value = t("admin.saveError");
     }
   } finally {
     loading.value = false;
@@ -74,31 +76,31 @@ onMounted(async () => {
   <section class="page">
     <div class="card reveal" :ref="revealRef">
       <div class="section-heading">
-        <p class="tag">Админ</p>
-        <h1>Добавление услуги</h1>
-        <p class="muted">Только для администраторов. Данные отправляются в API.</p>
+        <p class="tag">{{ t("profile.adminTag") }}</p>
+        <h1>{{ t("admin.addServiceTitle") }}</h1>
+        <p class="muted">{{ t("admin.addServiceHint") }}</p>
       </div>
       <form class="form" @submit.prevent="submit">
         <label>
-          <span>Название услуги</span>
-          <input v-model="form.name" type="text" placeholder="Например, Детокс-уход" required />
+          <span>{{ t("admin.name") }}</span>
+          <input v-model="form.name" type="text" :placeholder="t('admin.namePlaceholder')" required />
         </label>
         <label>
-          <span>Описание</span>
+          <span>{{ t("admin.description") }}</span>
           <textarea
             v-model="form.description"
             rows="3"
-            placeholder="Краткое описание услуги"
+            :placeholder="t('admin.descriptionPlaceholder')"
           ></textarea>
         </label>
         <label>
-          <span>Цена (₽)</span>
+          <span>{{ t("admin.price") }} (€)</span>
           <input v-model="form.price" type="number" step="0.01" placeholder="0.00" required />
         </label>
         <label>
-          <span>Категория</span>
+          <span>{{ t("admin.category") }}</span>
           <select v-model="form.category_id" required>
-            <option disabled value="">Выберите категорию</option>
+            <option disabled value="">{{ t("admin.chooseCategory") }}</option>
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">
               {{ cat.name }}
             </option>
@@ -106,16 +108,16 @@ onMounted(async () => {
         </label>
         <label class="inline">
           <input v-model="form.selfAssigned" type="checkbox" />
-          <span>Я оказываю эту услугу</span>
+          <span>{{ t("admin.selfAssigned") }}</span>
         </label>
         <p v-if="error" class="error">{{ error }}</p>
         <p v-if="success" class="success">{{ success }}</p>
         <div class="actions">
           <button class="cta primary" type="submit" :disabled="loading">
-            {{ loading ? "Сохранение..." : "Сохранить" }}
+            {{ loading ? t("admin.saving") : t("common.save") }}
           </button>
           <button class="cta secondary" type="button" @click="router.push('/profile')">
-            Отмена
+            {{ t("admin.cancel") }}
           </button>
         </div>
       </form>
@@ -171,5 +173,20 @@ select {
 .success {
   color: #345f20;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem 0;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .cta {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 </style>

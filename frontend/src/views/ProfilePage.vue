@@ -1,8 +1,8 @@
 <template>
   <div class="page">
     <div class="section-heading">
-      <p class="tag">Личный кабинет</p>
-      <h1>Ваш профиль BIZU</h1>
+      <p class="tag">{{ t("nav.profile") }}</p>
+      <h1>{{ t("profile.title") }}</h1>
     </div>
     <div class="card profile-card">
       <div v-if="auth.state.loadingMe" class="skeleton">
@@ -12,30 +12,34 @@
       </div>
       <div v-else class="profile-info">
         <div>
-          <p class="tag">Данные профиля</p>
-          <h3>{{ auth.state.user?.name || "Профиль" }}</h3>
-          <p class="muted">Email: {{ auth.state.user?.email || "—" }}</p>
-          <p class="muted">Телефон: {{ auth.state.user?.phone || "—" }}</p>
-          <p class="muted">Роль: {{ roleLabel(auth.state.user?.role) }}</p>
+          <p class="tag">{{ t("profile.dataTitle") }}</p>
+          <h3>{{ auth.state.user?.name || t("profile.profileFallback") }}</h3>
+          <p class="muted">{{ t("profile.email") }}: {{ auth.state.user?.email || "—" }}</p>
+          <p class="muted">{{ t("profile.phone") }}: {{ auth.state.user?.phone || "—" }}</p>
+          <p class="muted">{{ t("profile.role") }}: {{ roleLabel(auth.state.user?.role) }}</p>
         </div>
-        <button class="cta secondary" type="button" @click="handleLogout">Выйти</button>
+        <button class="cta secondary" type="button" @click="handleLogout">
+          {{ t("nav.logout") }}
+        </button>
       </div>
     </div>
-    <div v-if="auth.state.user?.role === 'admin'" class="card admin-card">
+    <div v-if="auth.state.user?.role === 'master'" class="card admin-card">
       <div>
-        <p class="tag">Админ</p>
-        <h3>Управление услугами</h3>
-        <p class="muted">Быстрый доступ к добавлению новых услуг.</p>
+        <p class="tag">Мастер</p>
+        <h3>Управление своими услугами</h3>
+        <p class="muted">Добавляйте и редактируйте услуги, а также ведите переписку с клиентами.</p>
       </div>
-      <router-link class="cta primary" to="/admin/services/new">Добавить услугу</router-link>
+      <router-link class="cta primary" :to="{ path: '/profile', query: { tab: 'master-services' } }">
+        Мои услуги
+      </router-link>
     </div>
     <div v-if="auth.state.user?.role === 'client'" class="card plan-card">
       <div>
-        <p class="tag">План</p>
-        <h3>Мой план процедур</h3>
-        <p class="muted">Список выбранных услуг доступен в любое время.</p>
+        <p class="tag">{{ t("nav.plan") }}</p>
+        <h3>{{ t("profile.planTitle") }}</h3>
+        <p class="muted">{{ t("profile.planText") }}</p>
       </div>
-      <router-link class="cta secondary" to="/plan">Открыть план</router-link>
+      <router-link class="cta secondary" to="/plan">{{ t("profile.openPlan") }}</router-link>
     </div>
     <ProfileLayout />
   </div>
@@ -46,10 +50,12 @@ import ProfileLayout from "@/components/profile/ProfileLayout.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { usePlanStore } from "@/stores/plan";
+import { useI18n } from "vue-i18n";
 
 const auth = useAuthStore();
 const plan = usePlanStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const handleLogout = () => {
   auth.logout();
@@ -58,8 +64,9 @@ const handleLogout = () => {
 };
 
 const roleLabel = (role) => {
-  if (role === "admin") return "Администратор";
-  if (role === "client") return "Клиент";
+  if (role === "admin") return t("profile.admin");
+  if (role === "master") return t("profile.master");
+  if (role === "client") return t("profile.client");
   return "—";
 };
 </script>
@@ -129,10 +136,32 @@ const roleLabel = (role) => {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .page {
+    gap: 0.8rem;
+  }
+
   .profile-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .profile-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-card,
+  .plan-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-card .cta,
+  .admin-card .cta,
+  .plan-card .cta {
+    width: 100%;
+    min-height: 44px;
   }
 }
 </style>

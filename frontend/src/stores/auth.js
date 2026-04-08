@@ -1,6 +1,7 @@
 import { computed, reactive } from "vue";
 import api from "@/api/client";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "@/utils/authTokens";
+import { i18n } from "@/i18n";
 
 const state = reactive({
   accessToken: getAccessToken() || "",
@@ -42,7 +43,7 @@ const login = async ({ email, password }) => {
     syncTokens();
     await fetchMe();
   } catch (error) {
-    state.error = error.response?.data?.detail || "Неверный email или пароль.";
+    state.error = error.response?.data?.detail || i18n.global.t("auth.invalidCredentials");
     throw error;
   } finally {
     state.loading = false;
@@ -65,7 +66,7 @@ const register = async ({ name, phone, email, password, role }) => {
     state.error =
       error.response?.data?.email?.[0] ||
       error.response?.data?.detail ||
-      "Не удалось зарегистрироваться. Проверьте данные.";
+      i18n.global.t("auth.registerErrorDetailed");
     throw error;
   } finally {
     state.loading = false;
@@ -82,8 +83,7 @@ const updateProfile = async (formData) => {
     state.user = res.data;
   } catch (error) {
     state.error =
-      error.response?.data?.detail ||
-      "Не удалось обновить профиль. Проверьте данные.";
+      error.response?.data?.detail || i18n.global.t("profile.updateError");
     throw error;
   } finally {
     state.loading = false;

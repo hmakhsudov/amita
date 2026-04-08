@@ -1,17 +1,24 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+
 const props = defineProps({
   history: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   error: { type: String, default: "" },
 });
 
+const { t, locale } = useI18n();
+
 const formatDateTime = (value) => {
   const date = new Date(value);
-  const dateLabel = date.toLocaleDateString("ru-RU", {
+  const dateLabel = date.toLocaleDateString(locale.value, {
     day: "2-digit",
     month: "long",
   });
-  const timeLabel = date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  const timeLabel = date.toLocaleTimeString(locale.value, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   return `${dateLabel} • ${timeLabel}`;
 };
 </script>
@@ -19,8 +26,8 @@ const formatDateTime = (value) => {
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">История</p>
-      <h3>Прошедшие визиты</h3>
+      <p class="tag">{{ t("profile.tabs.history") }}</p>
+      <h3>{{ t("history.title") }}</h3>
     </div>
 
     <div v-if="loading" class="list">
@@ -28,7 +35,7 @@ const formatDateTime = (value) => {
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="!history.length" class="empty muted">
-      Пока нет завершённых посещений.
+      {{ t("history.empty") }}
     </div>
     <div v-else class="list">
       <article v-for="item in history" :key="item.id" class="row">
@@ -36,12 +43,12 @@ const formatDateTime = (value) => {
           <h4>{{ item.service?.name }}</h4>
           <p class="muted">
             {{ formatDateTime(item.start_at) }} •
-            {{ item.master?.name || "Мастер салона" }}
+            {{ item.master?.name || t("booking.masterFallback") }}
           </p>
-          <p class="muted">Стоимость: {{ item.service?.price }} ₽</p>
-          <p class="status done">Выполнено</p>
+          <p class="muted">{{ t("history.price") }}: {{ item.service?.price }} €</p>
+          <p class="status done">{{ t("bookings.completed") }}</p>
         </div>
-        <button class="cta secondary" type="button">Оставить отзыв</button>
+        <button class="cta secondary" type="button">{{ t("history.review") }}</button>
       </article>
     </div>
   </div>
@@ -101,10 +108,15 @@ const formatDateTime = (value) => {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .row .cta {
+    width: 100%;
+    min-height: 44px;
   }
 }
 </style>

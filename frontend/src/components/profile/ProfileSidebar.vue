@@ -63,15 +63,20 @@ const emit = defineEmits(["change"]);
     top: auto;
     padding: 0.8rem;
   }
+
   .menu {
     display: flex;
     gap: 0.6rem;
     overflow-x: auto;
     padding-bottom: 0.3rem;
+    scrollbar-width: thin;
   }
+
   .item {
     white-space: nowrap;
     flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0.6rem 0.85rem;
   }
 }
 </style>

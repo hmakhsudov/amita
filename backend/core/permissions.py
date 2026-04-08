@@ -14,6 +14,17 @@ class IsAdminRole(BasePermission):
         return bool(profile and profile.role == "admin")
 
 
+class IsAdminOnly(BasePermission):
+    message = "Недостаточно прав."
+
+    def has_permission(self, request, view) -> bool:
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        profile = getattr(user, "profile", None)
+        return bool(profile and profile.role == "admin")
+
+
 class IsClientRole(BasePermission):
     message = "Недостаточно прав."
 
@@ -68,7 +79,10 @@ class IsServiceMasterOrAdmin(BasePermission):
         if not user or not user.is_authenticated:
             return False
         profile = getattr(user, "profile", None)
-        return bool(profile and profile.role == "admin")
+        return bool(
+            profile
+            and profile.role in {"admin", "master"}
+        )
 
     def has_object_permission(self, request, view, obj) -> bool:
         if request.method in SAFE_METHODS:
@@ -78,6 +92,12 @@ class IsServiceMasterOrAdmin(BasePermission):
             return False
         if user.is_superuser:
             return True
+        profile = getattr(user, "profile", None)
+        # Staff users are allowed to manage all services in the admin panel.
+        if profile and profile.role == "admin":
+            return True
+        if not profile or profile.role != "master":
+            return False
         if obj.masters.filter(id=user.id).exists():
             return True
         masters_ids = request.data.get("masters_ids") if hasattr(request, "data") else None

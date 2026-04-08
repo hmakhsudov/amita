@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import { i18n } from "@/i18n";
 import {
   cancelBooking as apiCancelBooking,
   createBooking as apiCreateBooking,
@@ -24,7 +25,7 @@ const fetchMyBookings = async () => {
     const data = await apiFetchMyBookings();
     state.items = Array.isArray(data) ? data : [];
   } catch (error) {
-    state.error = "Не удалось загрузить записи.";
+    state.error = i18n.global.t("bookings.loadError");
     throw error;
   } finally {
     state.loading = false;
@@ -38,7 +39,7 @@ const fetchHistory = async () => {
     const data = await apiFetchBookingHistory();
     state.historyItems = Array.isArray(data) ? data : [];
   } catch (error) {
-    state.historyError = "Не удалось загрузить историю посещений.";
+    state.historyError = i18n.global.t("history.loadError");
     throw error;
   } finally {
     state.historyLoading = false;
@@ -53,7 +54,7 @@ const createBooking = async (payload) => {
     return data;
   } catch (error) {
     state.error =
-      error.response?.data?.detail || "Не удалось создать запись. Попробуйте позже.";
+      error.response?.data?.detail || i18n.global.t("bookings.createError");
     throw error;
   }
 };
@@ -65,7 +66,7 @@ const cancelBooking = async (id) => {
     state.items = state.items.map((item) => (item.id === data.id ? data : item));
     return data;
   } catch (error) {
-    state.error = error.response?.data?.detail || "Не удалось отменить запись.";
+    state.error = error.response?.data?.detail || i18n.global.t("bookings.cancelError");
     throw error;
   }
 };
@@ -77,7 +78,7 @@ const fetchMasterBookings = async () => {
     const data = await apiFetchMasterBookings();
     state.items = Array.isArray(data) ? data : [];
   } catch (error) {
-    state.error = "Не удалось загрузить записи мастера.";
+    state.error = i18n.global.t("bookings.masterLoadError");
     throw error;
   } finally {
     state.loading = false;
@@ -91,7 +92,7 @@ const updateStatus = async (id, status) => {
     state.items = state.items.map((item) => (item.id === data.id ? data : item));
     return data;
   } catch (error) {
-    state.error = error.response?.data?.detail || "Не удалось обновить статус.";
+    state.error = error.response?.data?.detail || i18n.global.t("bookings.updateStatusError");
     throw error;
   }
 };

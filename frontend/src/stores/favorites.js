@@ -1,5 +1,6 @@
 import { computed, reactive } from "vue";
 import { addFavorite as apiAddFavorite, fetchFavorites as apiFetchFavorites, removeFavorite as apiRemoveFavorite } from "@/api/favorites";
+import { i18n } from "@/i18n";
 
 const state = reactive({
   favorites: [],
@@ -14,7 +15,7 @@ const fetchFavorites = async () => {
     const data = await apiFetchFavorites();
     state.favorites = Array.isArray(data) ? data : [];
   } catch (error) {
-    state.error = "Не удалось загрузить избранное.";
+    state.error = i18n.global.t("favorites.loadError");
     throw error;
   } finally {
     state.loading = false;
@@ -30,7 +31,7 @@ const addFavorite = async (serviceId) => {
     }
     return data;
   } catch (error) {
-    state.error = "Не удалось добавить в избранное.";
+    state.error = i18n.global.t("favorites.addError");
     throw error;
   }
 };
@@ -41,7 +42,7 @@ const removeFavorite = async (favoriteId) => {
     await apiRemoveFavorite(favoriteId);
     state.favorites = state.favorites.filter((item) => item.id !== favoriteId);
   } catch (error) {
-    state.error = "Не удалось удалить из избранного.";
+    state.error = i18n.global.t("favorites.removeError");
     throw error;
   }
 };

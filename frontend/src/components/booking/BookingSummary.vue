@@ -1,4 +1,5 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
 const props = defineProps({
@@ -11,35 +12,38 @@ const props = defineProps({
 
 const emit = defineEmits(["confirm"]);
 const { revealRef } = useReveal();
+const { t } = useI18n();
 </script>
 
 <template>
   <section class="card reveal" :ref="revealRef">
     <div class="section-heading">
-      <p class="tag">Подтверждение</p>
-      <h3>Проверьте детали</h3>
+      <p class="tag">{{ t("booking.stepConfirm") }}</p>
+      <h3>{{ t("booking.confirmTitle") }}</h3>
     </div>
     <div class="summary-grid">
       <div class="summary-item">
-        <p class="muted">Услуга</p>
-        <strong>{{ service?.name || "Не выбрано" }}</strong>
+        <p class="muted">{{ t("booking.summaryService") }}</p>
+        <strong>{{ service?.name || t("booking.summaryNone") }}</strong>
       </div>
       <div class="summary-item">
-        <p class="muted">Время</p>
-        <strong>{{ slotLabel || slot || "Не выбрано" }}</strong>
+        <p class="muted">{{ t("booking.summaryTime") }}</p>
+        <strong>{{ slotLabel || slot || t("booking.summaryNone") }}</strong>
       </div>
       <div class="summary-item">
-        <p class="muted">Мастер</p>
-        <strong>{{ master?.name || "Не выбрано" }}</strong>
+        <p class="muted">{{ t("booking.summaryMaster") }}</p>
+        <strong>{{ master?.name || t("booking.summaryNone") }}</strong>
       </div>
       <div class="summary-item">
-        <p class="muted">Клиент</p>
-        <strong>{{ form.name || "Имя клиента" }}</strong>
+        <p class="muted">{{ t("booking.summaryClient") }}</p>
+        <strong>{{ form.name || t("booking.summaryClientName") }}</strong>
         <p class="muted">{{ form.phone }}</p>
         <p class="muted">{{ form.email }}</p>
       </div>
     </div>
-    <button class="cta primary" type="button" @click="emit('confirm')">Подтвердить запись</button>
+    <button class="cta primary" type="button" @click="emit('confirm')">
+      {{ t("booking.confirm") }}
+    </button>
   </section>
 </template>
 

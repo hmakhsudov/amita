@@ -20,7 +20,7 @@ def _get_role(user):
 
 
 def _is_master(user):
-    return _get_role(user) == UserProfile.ROLE_ADMIN
+    return _get_role(user) == UserProfile.ROLE_MASTER
 
 
 def _is_client(user):

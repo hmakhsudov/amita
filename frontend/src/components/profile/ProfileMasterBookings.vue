@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   bookings: { type: Array, default: () => [] },
@@ -9,6 +10,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["status", "message"]);
+const { t } = useI18n();
 
 const now = () => new Date();
 const upcoming = computed(() =>
@@ -33,9 +35,9 @@ const formatDateTime = (value) => {
 };
 
 const statusLabel = (status) => {
-  if (status === "scheduled") return "Ожидается";
-  if (status === "cancelled") return "Отменено";
-  if (status === "completed") return "Выполнено";
+  if (status === "scheduled") return t("bookings.pending");
+  if (status === "cancelled") return t("bookings.cancelled");
+  if (status === "completed") return t("bookings.completed");
   return "—";
 };
 
@@ -57,33 +59,34 @@ const openMessage = (clientId) => {
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">Записи ко мне</p>
-      <h3>Управление статусами</h3>
+      <p class="tag">{{ t("profile.tabs.masterBookings") }}</p>
+      <h3>{{ t("profile.masterBookingsTitle") }}</h3>
     </div>
     <div v-if="loading" class="grid">
       <div v-for="n in 2" :key="n" class="booking skeleton"></div>
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="!bookings.length" class="empty muted">
-      Пока нет записей, назначенных вам как мастеру.
+      {{ t("profile.masterBookingsEmpty") }}
     </div>
     <div v-else class="grid">
-      <h4 v-if="upcoming.length" class="subheading">Предстоящие</h4>
+      <h4 v-if="upcoming.length" class="subheading">{{ t("bookings.upcoming") }}</h4>
       <article v-for="item in upcoming" :key="`up-${item.id}`" class="booking">
         <div>
           <h4>{{ item.service?.name }}</h4>
           <p class="muted">
-            Клиент: {{ item.client_name || "—" }} • {{ item.client_phone || "—" }}
+            {{ t("bookings.clientLabel", { name: item.client_name || "—" }) }} •
+            {{ item.client_phone || "—" }}
           </p>
           <p class="muted">{{ formatDateTime(item.start_at) }}</p>
           <p class="status" :class="statusClass(item.status)">{{ statusLabel(item.status) }}</p>
         </div>
         <div class="actions">
           <button class="cta secondary" type="button" @click="changeStatus(item.id, 'completed')">
-            Выполнено
+            {{ t("bookings.completed") }}
           </button>
           <button class="cta secondary" type="button" @click="changeStatus(item.id, 'cancelled')">
-            Отменить
+            {{ t("bookings.cancel") }}
           </button>
           <button
             v-if="item.client_id"
@@ -91,12 +94,12 @@ const openMessage = (clientId) => {
             type="button"
             @click="openMessage(item.client_id)"
           >
-            Написать клиенту
+            {{ t("bookings.writeClient") }}
           </button>
         </div>
       </article>
 
-      <h4 v-if="past.length" class="subheading">Прошлые</h4>
+      <h4 v-if="past.length" class="subheading">{{ t("bookings.past") }}</h4>
       <article v-for="item in past" :key="`past-${item.id}`" class="booking">
         <div>
           <h4>{{ item.service?.name }}</h4>
@@ -110,7 +113,7 @@ const openMessage = (clientId) => {
             type="button"
             @click="openMessage(item.client_id)"
           >
-            Написать клиенту
+            {{ t("bookings.writeClient") }}
           </button>
         </div>
       </article>
@@ -206,7 +209,7 @@ const openMessage = (clientId) => {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .booking {
     flex-direction: column;
     align-items: flex-start;
@@ -218,6 +221,14 @@ const openMessage = (clientId) => {
 }
 
 @media (max-width: 768px) {
+  .grid {
+    gap: 0.65rem;
+  }
+
+  .booking {
+    width: 100%;
+  }
+
   .actions .cta {
     width: 100%;
     min-height: 44px;

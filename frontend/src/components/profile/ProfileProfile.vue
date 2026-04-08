@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps({
@@ -10,6 +11,7 @@ const props = defineProps({
 });
 
 const auth = useAuthStore();
+const { t } = useI18n();
 const isEditing = ref(false);
 const error = ref("");
 const success = ref("");
@@ -83,10 +85,10 @@ const save = async () => {
   }
   try {
     await auth.updateProfile(payload);
-    success.value = "Профиль обновлён.";
+    success.value = t("profile.updated");
     isEditing.value = false;
   } catch (err) {
-    error.value = auth.state.error || "Не удалось сохранить изменения.";
+    error.value = auth.state.error || t("profile.updateError");
   }
 };
 </script>
@@ -94,31 +96,31 @@ const save = async () => {
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">Профиль</p>
-      <h3>Личные данные</h3>
+      <p class="tag">{{ t("profile.tabs.profile") }}</p>
+      <h3>{{ t("profile.personalData") }}</h3>
     </div>
     <div class="profile">
       <div class="avatar">
         <div v-if="avatarSrc" class="avatar-img">
-          <img :src="avatarSrc" alt="Аватар" />
+          <img :src="avatarSrc" :alt="t('profile.avatarAlt')" />
         </div>
         <div v-else class="avatar-placeholder">{{ avatarLetter }}</div>
         <label v-if="isEditing" class="upload">
-          <span>Загрузить фото</span>
+          <span>{{ t("profile.uploadPhoto") }}</span>
           <input type="file" accept="image/*" @change="onAvatarChange" />
         </label>
       </div>
       <div class="grid">
         <label>
-          <span>Имя</span>
+          <span>{{ t("booking.name") }}</span>
           <input v-model="form.name" type="text" :readonly="!isEditing" />
         </label>
         <label>
-          <span>Телефон</span>
+          <span>{{ t("booking.phone") }}</span>
           <input v-model="form.phone" type="text" :readonly="!isEditing" />
         </label>
         <label>
-          <span>Email</span>
+          <span>{{ t("booking.email") }}</span>
           <input v-model="form.email" type="email" :readonly="!isEditing" />
         </label>
       </div>
@@ -127,11 +129,13 @@ const save = async () => {
     <p v-if="success" class="success">{{ success }}</p>
     <div class="actions">
       <button v-if="!isEditing" class="cta secondary" type="button" @click="toggleEdit">
-        Редактировать
+        {{ t("common.edit") }}
       </button>
-      <button v-else class="cta primary" type="button" @click="save">Сохранить</button>
+      <button v-else class="cta primary" type="button" @click="save">
+        {{ t("common.save") }}
+      </button>
       <button v-if="isEditing" class="cta secondary" type="button" @click="toggleEdit">
-        Отмена
+        {{ t("admin.cancel") }}
       </button>
     </div>
   </div>
@@ -217,9 +221,27 @@ select {
   font-weight: 600;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .profile {
     grid-template-columns: 1fr;
+  }
+
+  .avatar {
+    justify-items: start;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .cta {
+    width: 100%;
+    min-height: 44px;
   }
 }
 </style>

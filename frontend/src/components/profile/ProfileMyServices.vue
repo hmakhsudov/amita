@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { fetchCategories, fetchServices, updateService } from "@/api/services";
+import { useI18n } from "vue-i18n";
+import { createService, fetchCategories, fetchServices, updateService } from "@/api/services";
 import { useAuthStore } from "@/stores/auth";
 
 const auth = useAuthStore();
@@ -10,6 +11,7 @@ const loading = ref(false);
 const error = ref("");
 const success = ref("");
 const editingId = ref(null);
+const { t } = useI18n();
 const form = ref({
   name: "",
   description: "",
@@ -34,7 +36,7 @@ const loadData = async () => {
     services.value = Array.isArray(servicesData) ? servicesData : [];
     categories.value = Array.isArray(categoriesData) ? categoriesData : [];
   } catch (err) {
-    error.value = "Не удалось загрузить услуги.";
+    error.value = t("admin.loadError");
   } finally {
     loading.value = false;
   }
@@ -52,6 +54,19 @@ const startEdit = (service) => {
   success.value = "";
 };
 
+const startCreate = () => {
+  editingId.value = 0;
+  form.value = {
+    name: "",
+    description: "",
+    price: "",
+    category_id: "",
+    masters: [auth.state.user?.id].filter(Boolean),
+  };
+  success.value = "";
+  error.value = "";
+};
+
 const toggleSelf = (checked) => {
   const id = auth.state.user?.id;
   if (!id) return;
@@ -64,7 +79,7 @@ const toggleSelf = (checked) => {
 };
 
 const save = async () => {
-  if (!editingId.value) return;
+  if (editingId.value === null) return;
   error.value = "";
   success.value = "";
   try {
@@ -75,21 +90,27 @@ const save = async () => {
       category_id: form.value.category_id,
       masters_ids: form.value.masters,
     };
-    const updated = await updateService(editingId.value, payload);
-    const stillAssigned = updated.masters?.some(
-      (master) => master.id === auth.state.user?.id
-    );
-    if (!stillAssigned) {
-      services.value = services.value.filter((service) => service.id !== updated.id);
+    if (editingId.value === 0) {
+      await createService(payload);
+      success.value = "Услуга создана";
+      await loadData();
     } else {
-      services.value = services.value.map((service) =>
-        service.id === updated.id ? updated : service
+      const updated = await updateService(editingId.value, payload);
+      const stillAssigned = updated.masters?.some(
+        (master) => master.id === auth.state.user?.id
       );
+      if (!stillAssigned) {
+        services.value = services.value.filter((service) => service.id !== updated.id);
+      } else {
+        services.value = services.value.map((service) =>
+          service.id === updated.id ? updated : service
+        );
+      }
+      success.value = t("admin.saved");
     }
-    success.value = "Изменения сохранены.";
     editingId.value = null;
   } catch (err) {
-    error.value = err.response?.data?.detail || "Не удалось сохранить изменения.";
+    error.value = err.response?.data?.detail || t("admin.saveError");
   }
 };
 
@@ -103,47 +124,91 @@ onMounted(loadData);
 <template>
   <div class="card">
     <div class="section-heading">
-      <p class="tag">Мои услуги</p>
-      <h3>Управление услугами</h3>
+      <p class="tag">{{ t("profile.tabs.masterServices") }}</p>
+      <h3>{{ t("admin.manageServices") }}</h3>
     </div>
+    <button v-if="editingId === null" class="cta primary" type="button" @click="startCreate">
+      Создать услугу
+    </button>
+    <article v-if="editingId === 0" class="service">
+      <div class="form">
+        <label>
+          <span>{{ t("admin.name") }}</span>
+          <input v-model="form.name" type="text" />
+        </label>
+        <label>
+          <span>{{ t("admin.description") }}</span>
+          <textarea v-model="form.description" rows="3"></textarea>
+        </label>
+        <label>
+          <span>{{ t("admin.price") }}</span>
+          <input v-model="form.price" type="number" step="0.01" />
+        </label>
+        <label>
+          <span>{{ t("admin.category") }}</span>
+          <select v-model="form.category_id">
+            <option disabled value="">{{ t("admin.chooseCategory") }}</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
+          </select>
+        </label>
+        <label class="inline">
+          <input
+            type="checkbox"
+            :checked="form.masters.includes(auth.state.user?.id)"
+            @change="toggleSelf($event.target.checked)"
+          />
+          <span>{{ t("admin.selfAssigned") }}</span>
+        </label>
+        <div class="actions">
+          <button class="cta primary" type="button" @click="save">
+            {{ t("common.save") }}
+          </button>
+          <button class="cta secondary" type="button" @click="cancelEdit">
+            {{ t("admin.cancel") }}
+          </button>
+        </div>
+      </div>
+    </article>
 
     <div v-if="loading" class="grid">
       <div v-for="n in 2" :key="n" class="service skeleton"></div>
     </div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="!services.length" class="empty muted">
-      Пока у вас нет услуг. Добавьте услугу в админ‑форме.
+    <div v-else-if="!services.length && editingId !== 0" class="empty muted">
+      {{ t("admin.noServices") }}
     </div>
 
     <div v-else class="grid">
       <article v-for="service in services" :key="service.id" class="service">
         <div v-if="editingId !== service.id">
           <h4>{{ service.name }}</h4>
-          <p class="muted">{{ service.category?.name || "Без категории" }}</p>
-          <p class="muted">{{ service.description || "Описание отсутствует." }}</p>
-          <p class="muted">Цена: {{ service.price }} ₽</p>
+          <p class="muted">{{ service.category?.name || t("services.uncategorized") }}</p>
+          <p class="muted">{{ service.description || t("admin.descMissing") }}</p>
+          <p class="muted">{{ t("admin.priceLabel") }}: {{ service.price }} €</p>
           <button class="cta secondary" type="button" @click="startEdit(service)">
-            Редактировать
+            {{ t("common.edit") }}
           </button>
         </div>
 
         <div v-else class="form">
           <label>
-            <span>Название</span>
+            <span>{{ t("admin.name") }}</span>
             <input v-model="form.name" type="text" />
           </label>
           <label>
-            <span>Описание</span>
+            <span>{{ t("admin.description") }}</span>
             <textarea v-model="form.description" rows="3"></textarea>
           </label>
           <label>
-            <span>Цена</span>
+            <span>{{ t("admin.price") }}</span>
             <input v-model="form.price" type="number" step="0.01" />
           </label>
           <label>
-            <span>Категория</span>
+            <span>{{ t("admin.category") }}</span>
             <select v-model="form.category_id">
-              <option disabled value="">Выберите категорию</option>
+              <option disabled value="">{{ t("admin.chooseCategory") }}</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
               </option>
@@ -155,11 +220,15 @@ onMounted(loadData);
               :checked="form.masters.includes(auth.state.user?.id)"
               @change="toggleSelf($event.target.checked)"
             />
-            <span>Я оказываю эту услугу</span>
+            <span>{{ t("admin.selfAssigned") }}</span>
           </label>
           <div class="actions">
-            <button class="cta primary" type="button" @click="save">Сохранить</button>
-            <button class="cta secondary" type="button" @click="cancelEdit">Отмена</button>
+            <button class="cta primary" type="button" @click="save">
+              {{ t("common.save") }}
+            </button>
+            <button class="cta secondary" type="button" @click="cancelEdit">
+              {{ t("admin.cancel") }}
+            </button>
           </div>
         </div>
       </article>
@@ -242,6 +311,26 @@ select {
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .form {
+    gap: 0.5rem;
+  }
+
+  .card > .cta {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .cta {
+    width: 100%;
+    min-height: 44px;
   }
 }
 </style>

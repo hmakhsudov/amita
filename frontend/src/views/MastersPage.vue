@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useReveal } from "@/composables/useReveal";
 import { fetchMasters } from "@/api/masters";
@@ -13,8 +14,10 @@ const toast = ref("");
 const auth = useAuthStore();
 const chat = useChatStore();
 const router = useRouter();
+const { t } = useI18n();
 const isAuthenticated = computed(() => auth.isAuthenticated.value);
-const isMaster = computed(() => auth.state.user?.role === "admin");
+const isMaster = computed(() => auth.state.user?.role === "master");
+const isStaffAdmin = computed(() => auth.state.user?.role === "admin");
 const { revealRef } = useReveal();
 
 const loadMasters = async () => {
@@ -24,16 +27,16 @@ const loadMasters = async () => {
     const data = await fetchMasters();
     masters.value = Array.isArray(data) ? data : [];
   } catch (err) {
-    error.value = "Не удалось загрузить список мастеров.";
+    error.value = t("masters.loadError");
   } finally {
     loading.value = false;
   }
 };
 
 const startChat = async (masterId) => {
-  if (isMaster.value) return;
+  if (isMaster.value || isStaffAdmin.value) return;
   if (!isAuthenticated.value) {
-    toast.value = "Войдите, чтобы написать сообщение.";
+    toast.value = t("masters.loginToMessage");
     setTimeout(() => {
       toast.value = "";
       router.push("/login");
@@ -44,7 +47,7 @@ const startChat = async (masterId) => {
     await chat.openConversation(masterId);
     router.push({ name: "profile", query: { tab: "messages" } });
   } catch (err) {
-    toast.value = "Не удалось открыть диалог.";
+    toast.value = t("messages.openError");
     setTimeout(() => {
       toast.value = "";
     }, 1600);
@@ -63,9 +66,9 @@ onMounted(loadMasters);
   <div class="page">
     <section class="section">
       <div class="section-heading reveal" :ref="revealRef">
-        <p class="tag">Мастера</p>
-        <h1>Наши специалисты</h1>
-        <p class="muted">Выберите мастера и напишите, чтобы уточнить детали услуги.</p>
+        <p class="tag">{{ t("nav.masters") }}</p>
+        <h1>{{ t("masters.title") }}</h1>
+        <p class="muted">{{ t("masters.subtitle") }}</p>
       </div>
 
       <div v-if="loading" class="grid">
@@ -73,7 +76,7 @@ onMounted(loadMasters);
       </div>
       <div v-else-if="error" class="error">{{ error }}</div>
       <div v-else-if="!masters.length" class="card empty">
-        <p class="muted">Пока нет доступных мастеров.</p>
+        <p class="muted">{{ t("masters.empty") }}</p>
       </div>
 
       <div v-else class="grid">
@@ -84,12 +87,12 @@ onMounted(loadMasters);
           </div>
           <div class="info">
             <h3>{{ master.name }}</h3>
-            <p class="muted">Мастер</p>
+            <p class="muted">{{ t("messages.roleMaster") }}</p>
             <p v-if="master.phone" class="muted">{{ master.phone }}</p>
           </div>
-          <div v-if="!isMaster" class="actions">
+          <div v-if="!isMaster && !isStaffAdmin" class="actions">
             <button class="cta primary" type="button" @click="startChat(master.id)">
-              Написать
+              {{ t("masters.write") }}
             </button>
           </div>
         </article>

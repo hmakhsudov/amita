@@ -1,29 +1,28 @@
 <script setup>
+import { useI18n } from "vue-i18n";
 import { useReveal } from "@/composables/useReveal";
 
+const { t } = useI18n();
 const { revealRef } = useReveal();
 </script>
 
 <template>
   <section class="section recommend">
     <div class="section-heading reveal" :ref="revealRef">
-      <p class="tag">ИИ-ассистент</p>
-      <h2>Подбор ухода с помощью ИИ</h2>
-      <p class="muted">
-        Наш ИИ-ассистент помогает выбрать услуги под ваши цели и состояние кожи и тела.
-      </p>
+      <p class="tag">{{ t("home.assistantTag") }}</p>
+      <h2>{{ t("home.assistantHeadline") }}</h2>
+      <p class="muted">{{ t("home.assistantText") }}</p>
     </div>
     <div class="card recommend-card reveal" :ref="revealRef">
       <div class="top">
         <div>
-          <p class="pill">Помощник</p>
-          <h3>Индивидуальные рекомендации</h3>
-          <p class="muted">
-            ИИ учитывает ваши цели, время и комфорт, чтобы подобрать подходящие процедуры из
-            каталога.
-          </p>
+          <p class="pill">{{ t("home.assistantPill") }}</p>
+          <h3>{{ t("home.assistantCardTitle") }}</h3>
+          <p class="muted">{{ t("home.assistantCardText") }}</p>
         </div>
-        <router-link class="cta secondary" to="/assistant">Попробовать ассистента</router-link>
+        <router-link class="cta secondary" to="/assistant">
+          {{ t("home.assistantCardCta") }}
+        </router-link>
       </div>
     </div>
   </section>
@@ -62,7 +61,7 @@ const { revealRef } = useReveal();
   flex-wrap: wrap;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .top {
     flex-direction: column;
     align-items: flex-start;
