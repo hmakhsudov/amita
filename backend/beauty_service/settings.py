@@ -42,7 +42,7 @@ DEBUG = _env_bool("DJANGO_DEBUG", True)
 
 ALLOWED_HOSTS: list[str] = _split_env(
     "DJANGO_ALLOWED_HOSTS",
-    ["localhost", "127.0.0.1", "0.0.0.0"],
+    ["localhost", "127.0.0.1", "0.0.0.0", "147.45.156.8"],
 )
 
 # Application definition
@@ -170,7 +170,7 @@ REST_FRAMEWORK = {
 # CORS: allow the Vite dev server and production frontend origins.
 CORS_ALLOWED_ORIGINS = _split_env(
     "CORS_ALLOWED_ORIGINS",
-    ["http://localhost:5173", "http://147.45.156.8/"],
+    ["http://localhost:5173", "http://147.45.156.8"],
 )
 CORS_ALLOW_ALL_ORIGINS = _env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 
