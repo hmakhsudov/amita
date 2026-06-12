@@ -48,8 +48,14 @@ const scrollToBottom = async () => {
   }
 };
 
+const resolveMessageText = (value) => {
+  if (typeof value === "string") return value;
+  if (value == null) return input.value || "";
+  return String(value);
+};
+
 const sendMessage = async (text) => {
-  const message = (text ?? input.value).trim();
+  const message = String(resolveMessageText(text)).trim();
   if (!message || sending.value) return;
   error.value = "";
   pushUserMessage(message);
@@ -78,6 +84,10 @@ const sendMessage = async (text) => {
 const sendFollowUp = (question) => {
   const text = getFollowUpReply(question);
   sendMessage(text);
+};
+
+const handleSend = () => {
+  sendMessage(input.value);
 };
 
 const addToPlan = async (serviceId) => {
@@ -112,7 +122,7 @@ onMounted(() => {
 });
 
 const getFollowUpReply = (text) => {
-  const trimmed = text.trim();
+  const trimmed = String(text ?? "").trim();
   if (!trimmed.endsWith("?")) return trimmed;
   const lower = trimmed.toLowerCase();
   if (lower.includes("цель") || lower.includes("ziel")) return t("assistant.replyGoal");
@@ -202,15 +212,20 @@ const getFollowUpReply = (text) => {
         <div v-if="sending" class="typing muted">{{ t("assistant.typing") }}</div>
       </div>
 
-      <form class="input" @submit.prevent="sendMessage">
+      <form class="input" @submit.prevent="handleSend">
         <input
           v-model="input"
           type="text"
           :placeholder="t('assistant.placeholder')"
           :disabled="sending"
-          @keydown.enter.exact.prevent="sendMessage"
+          @keydown.enter.exact.prevent="handleSend"
         />
-        <button class="cta primary" type="submit" :disabled="sending || !input.trim()">
+        <button
+          class="cta primary"
+          type="button"
+          :disabled="sending || !String(input || '').trim()"
+          @click="handleSend"
+        >
           {{ t("assistant.send") }}
         </button>
       </form>

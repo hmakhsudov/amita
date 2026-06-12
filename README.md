@@ -20,15 +20,15 @@ python manage.py runserver         # start API on http://localhost:8000
 
 ### Environment
 Set these for the AI assistant endpoint in the project root `.env`:
-- `OPENAI_API_KEY` — required to call the OpenAI API.
-- `OPENAI_MODEL` — optional, defaults to `gpt-4.1-mini`.
+- `OPENROUTER_API_KEY` — required to call the OpenRouter API.
+- `OPENROUTER_MODEL` — optional, defaults to `mistralai/mistral-7b-instruct:free` with fallback to `openrouter/free`.
 
 ### Endpoints
 - `/` — Health check JSON: “Beauty service API is running”.
 - `/django-admin/` — Django admin for backend maintenance.
 - `/api/services/` — placeholder services list (replace with DB + serializers).
 - `/api/recommendations/` — placeholder recommendations (future ML hook).
-- `/api/ai/chat/` — AI cosmetologist assistant (OpenAI required).
+- `/api/ai/chat/` — AI cosmetologist assistant (OpenRouter required).
 
 ### CORS
 `CORS_ALLOWED_ORIGINS` is set for `http://localhost:5173` (Vite dev server). Add production origins when deploying.

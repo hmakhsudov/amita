@@ -17,8 +17,11 @@ from .models import AiConversation, AiMessage, Booking, Plan, Service, UserProfi
 
 logger = logging.getLogger(__name__)
 
-MODEL_DEFAULT = "gpt-4.1-mini"
+MODEL_DEFAULT = "mistralai/mistral-7b-instruct:free"
+MODEL_FALLBACK = "openrouter/free"
 MAX_HISTORY_MESSAGES = 10
+MAX_RETRIES = 2
+OPENROUTER_TIMEOUT_SECONDS = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "18"))
 
 SEVERE_KEYWORDS = [
     "кров",
@@ -39,13 +42,18 @@ SEVERE_KEYWORDS = [
 ]
 
 
-def _get_openai_client():
+def _get_openrouter_client():
     if OpenAI is None:
         return None
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
     if not api_key:
         return None
-    return OpenAI(api_key=api_key)
+    return OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+        timeout=OPENROUTER_TIMEOUT_SECONDS,
+        max_retries=0,
+    )
 
 
 def _build_catalog(services: List[Service]) -> str:
@@ -92,13 +100,23 @@ def _build_messages(
     conversation: AiConversation,
     user_message: str,
     system_context: str,
-    json_mode: bool = False,
 ) -> List[Dict]:
-    json_instruction = (
-        "Отвечай строго валидным JSON без пояснений, без Markdown и без оберток."
-        if json_mode
-        else ""
+    output_contract = (
+        "Верни только JSON-объект без Markdown и пояснений. "
+        "Структура JSON:\n"
+        "{\n"
+        "  \"assistant_message\": \"string\",\n"
+        "  \"recommended_services\": [\n"
+        "    {\"service_id\": number, \"reason\": \"string\"}\n"
+        "  ],\n"
+        "  \"follow_up_questions\": [\"string\"],\n"
+        "  \"safety_note\": \"string\"\n"
+        "}\n"
+        "recommended_services: максимум 5 элементов. "
+        "Рекомендуй ТОЛЬКО service_id из SERVICES CATALOG. "
+        "Если не уверен — верни пустой массив recommended_services и уточняющие follow_up_questions."
     )
+
     messages = [
         {
             "role": "system",
@@ -111,18 +129,20 @@ def _build_messages(
                 "а не вопросы."
             ),
         },
-        *( [{"role": "system", "content": json_instruction}] if json_instruction else [] ),
+        {"role": "system", "content": output_contract},
         {
             "role": "system",
             "content": system_context,
         },
     ]
+
     history = (
         AiMessage.objects.filter(conversation=conversation)
         .order_by("-created_at")[:MAX_HISTORY_MESSAGES]
     )
     for msg in reversed(list(history)):
         messages.append({"role": msg.role, "content": msg.content})
+
     messages.append({"role": "user", "content": user_message})
     return messages
 
@@ -130,6 +150,120 @@ def _build_messages(
 def _severe_symptoms(message: str) -> bool:
     lowered = message.lower()
     return any(keyword in lowered for keyword in SEVERE_KEYWORDS)
+
+
+def _chat_completion_with_retry(client, model: str, messages: List[Dict]):
+    last_exception = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            logger.info(
+                "OpenRouter AI request: model=%s attempt=%s/%s",
+                model,
+                attempt,
+                MAX_RETRIES,
+            )
+            return client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.4,
+            )
+        except Exception as exc:
+            last_exception = exc
+            logger.exception(
+                "OpenRouter chat completion error (attempt %s/%s): model=%s",
+                attempt,
+                MAX_RETRIES,
+                model,
+            )
+    raise last_exception
+
+
+def _build_model_candidates() -> List[str]:
+    primary_model = (os.getenv("OPENROUTER_MODEL", MODEL_DEFAULT) or "").strip() or MODEL_DEFAULT
+    candidates = [primary_model]
+    if primary_model != MODEL_FALLBACK:
+        candidates.append(MODEL_FALLBACK)
+    return candidates
+
+
+def _model_error_detail(exc: Exception) -> str:
+    error_text = str(exc)
+    lowered = error_text.lower()
+    if (
+        "no endpoints found" in lowered
+        or "404" in lowered
+        or "model not found" in lowered
+        or "does not exist" in lowered
+    ):
+        return (
+            "Модель OpenRouter недоступна. "
+            "Проверьте OPENROUTER_MODEL или используйте openrouter/free."
+        )
+    return (
+        "Не удалось получить ответ от AI. "
+        "Проверьте OPENROUTER_API_KEY, выбранную модель и лимиты OpenRouter."
+    )
+
+
+def _is_model_unavailable_error(exc: Exception) -> bool:
+    lowered = str(exc).lower()
+    return (
+        "no endpoints found" in lowered
+        or "404" in lowered
+        or "model not found" in lowered
+        or "does not exist" in lowered
+    )
+
+
+def _extract_response_text(response) -> str:
+    try:
+        content = response.choices[0].message.content
+    except Exception:
+        return ""
+
+    if isinstance(content, str):
+        return content.strip()
+
+    if isinstance(content, list):
+        chunks = []
+        for item in content:
+            if isinstance(item, str):
+                chunks.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("content")
+                if text:
+                    chunks.append(str(text))
+        return "\n".join(chunks).strip()
+
+    return ""
+
+
+def _parse_payload(raw_text: str) -> Dict:
+    if not raw_text:
+        return {}
+
+    text = raw_text.strip()
+    candidates = [text]
+
+    if text.startswith("```"):
+        cleaned = text.strip("`")
+        cleaned = cleaned.replace("json", "", 1).strip()
+        candidates.append(cleaned)
+
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        candidates.append(text[start : end + 1])
+
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            continue
+
+    return {}
 
 
 class AiChatView(APIView):
@@ -169,11 +303,13 @@ class AiChatView(APIView):
             content=message,
         )
 
-        services = (
+        services_qs = (
             Service.objects.select_related("category")
             .prefetch_related("masters", "masters__profile")
             .all()
         )
+        services = list(services_qs)
+
         if not services:
             return Response(
                 {
@@ -187,7 +323,8 @@ class AiChatView(APIView):
                     "safety_note": "Это не медицинская консультация. При симптомах обратитесь к врачу.",
                 }
             )
-        catalog = _build_catalog(list(services))
+
+        catalog = _build_catalog(services)
         client_context = ""
         if request.user.is_authenticated:
             client_context = _build_client_context(request.user)
@@ -207,157 +344,64 @@ class AiChatView(APIView):
             line for line in [catalog, client_context, *context_lines] if line
         )
 
-        schema = {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "assistant_message": {"type": "string"},
-                "recommended_services": {
-                    "type": "array",
-                    "maxItems": 5,
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "service_id": {"type": "integer"},
-                            "reason": {"type": "string"},
-                        },
-                        "required": ["service_id", "reason"],
-                    },
-                },
-                "follow_up_questions": {
-                    "type": "array",
-                    "maxItems": 5,
-                    "items": {"type": "string"},
-                },
-                "safety_note": {"type": "string"},
-            },
-            "required": [
-                "assistant_message",
-                "recommended_services",
-                "follow_up_questions",
-                "safety_note",
-            ],
-        }
-
-        client = _get_openai_client()
+        client = _get_openrouter_client()
         if not client:
             return Response(
-                {"detail": "AI не настроен. Укажите OPENAI_API_KEY."},
+                {"detail": "AI не настроен. Укажите OPENROUTER_API_KEY."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
-        model = os.getenv("OPENAI_MODEL", MODEL_DEFAULT)
+        model_candidates = _build_model_candidates()
+        response = None
+        last_error = None
 
-        logger.info(
-            "Using Responses structured outputs: text.format json_schema name=bizu_ai_response"
-        )
-        try:
-            response = client.responses.create(
-                model=model,
-                input=_build_messages(conversation, message, system_context),
-                temperature=0.4,
-                store=False,
-                text={
-                    "format": {
-                        "type": "json_schema",
-                        "name": "bizu_ai_response",
-                        "strict": True,
-                        "schema": schema,
-                    }
-                },
-            )
-        except Exception as exc:
-            error_text = str(exc)
-            if "text.format.name" in error_text or "missing required parameter" in error_text:
-                logger.exception(
-                    "AI chat request shape error: model=%s conversation=%s user=%s",
+        messages = _build_messages(conversation, message, system_context)
+        for idx, model in enumerate(model_candidates):
+            try:
+                response = _chat_completion_with_retry(
+                    client=client,
+                    model=model,
+                    messages=messages,
+                )
+                logger.info(
+                    "OpenRouter AI request successful: model=%s conversation=%s user=%s",
                     model,
                     conversation.id,
                     request.user.id if request.user.is_authenticated else "anon",
                 )
-                return Response(
-                    {
-                        "detail": (
-                            "Ошибка конфигурации AI (text.format.name). "
-                            "Проверьте обновлённую схему запроса."
-                        )
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-            if "json_schema" in error_text and "not supported" in error_text:
+                break
+            except Exception as exc:
+                last_error = exc
                 logger.warning(
-                    "Structured outputs not supported by model, falling back to json_object."
-                )
-                try:
-                    response = client.responses.create(
-                        model=model,
-                        input=_build_messages(
-                            conversation, message, system_context, json_mode=True
-                        ),
-                        temperature=0.3,
-                        store=False,
-                        text={"format": {"type": "json_object"}},
-                    )
-                except Exception as inner_exc:
-                    logger.exception(
-                        "AI chat error: model=%s conversation=%s user=%s",
-                        model,
-                        conversation.id,
-                        request.user.id if request.user.is_authenticated else "anon",
-                    )
-                    return Response(
-                        {
-                            "detail": (
-                                "Не удалось получить ответ от AI. Проверьте ключ и модель. "
-                                f"Ошибка: {inner_exc.__class__.__name__}."
-                            )
-                        },
-                        status=status.HTTP_502_BAD_GATEWAY,
-                    )
-            else:
-                logger.exception(
-                    "AI chat error: model=%s conversation=%s user=%s",
+                    "OpenRouter model failed: model=%s conversation=%s user=%s error=%s",
                     model,
                     conversation.id,
                     request.user.id if request.user.is_authenticated else "anon",
+                    exc,
                 )
-                return Response(
-                    {
-                        "detail": (
-                            "Не удалось получить ответ от AI. Проверьте ключ и модель. "
-                            f"Ошибка: {exc.__class__.__name__}."
-                        )
-                    },
-                    status=status.HTTP_502_BAD_GATEWAY,
-                )
+                if idx == 0 and _is_model_unavailable_error(exc) and len(model_candidates) > 1:
+                    logger.info(
+                        "Primary model is unavailable, switching to fallback model=%s",
+                        model_candidates[1],
+                    )
+                    continue
+                break
+
+        if response is None:
+            detail = _model_error_detail(last_error or Exception("unknown_error"))
             logger.exception(
-                "AI chat error: model=%s conversation=%s user=%s",
-                model,
+                "AI chat error via OpenRouter after fallbacks: models=%s conversation=%s user=%s",
+                ",".join(model_candidates),
                 conversation.id,
                 request.user.id if request.user.is_authenticated else "anon",
             )
             return Response(
-                {
-                    "detail": (
-                        "Не удалось получить ответ от AI. Проверьте ключ и модель. "
-                        f"Ошибка: {exc.__class__.__name__}."
-                    )
-                },
+                {"detail": f"{detail} Ошибка: {(last_error or Exception()).__class__.__name__}."},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        raw_text = getattr(response, "output_text", None)
-        if not raw_text:
-            try:
-                raw_text = response.output[0].content[0].text
-            except Exception:
-                raw_text = ""
-
-        try:
-            payload = json.loads(raw_text) if raw_text else {}
-        except json.JSONDecodeError:
-            payload = {}
+        raw_text = _extract_response_text(response)
+        payload = _parse_payload(raw_text)
 
         assistant_message = payload.get(
             "assistant_message",
@@ -380,6 +424,8 @@ class AiChatView(APIView):
         service_index = {service.id: service for service in services}
         recommended_services = []
         for rec in payload.get("recommended_services", []) or []:
+            if not isinstance(rec, dict):
+                continue
             service_id = rec.get("service_id")
             try:
                 service_id = int(service_id)
@@ -387,6 +433,11 @@ class AiChatView(APIView):
                 continue
             service = service_index.get(service_id)
             if not service:
+                logger.warning(
+                    "AI recommended unknown service_id=%s conversation=%s",
+                    service_id,
+                    conversation.id,
+                )
                 continue
             recommended_services.append(
                 {

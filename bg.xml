@@ -1,0 +1,149 @@
+<mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="0"> <root> <mxCell id="0"/> <mxCell id="1" parent="0"/><mxCell id="zone_domain" value="Domain tables" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+  <mxGeometry x="20" y="20" width="1400" height="1280" as="geometry"/>
+</mxCell>
+<mxCell id="zone_system" value="System/auth tables" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=18;" vertex="1" parent="1">
+  <mxGeometry x="1450" y="20" width="700" height="1280" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_servicecategory" value="&lt;b&gt;core_servicecategory&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;name VARCHAR(100) NOT NULL UNIQUE&lt;br/&gt;description TEXT NOT NULL default ''&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(name)&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;UK core_servicecategory(name)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="60" y="80" width="280" height="180" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_service" value="&lt;b&gt;core_service&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;name VARCHAR(150) NOT NULL&lt;br/&gt;category_id BIGINT FK NOT NULL → core_servicecategory.id&lt;br/&gt;description TEXT NOT NULL default ''&lt;br/&gt;duration_minutes INTEGER UNSIGNED NOT NULL default 60&lt;br/&gt;price DECIMAL(10,2) NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;IDX core_service(category_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="400" y="80" width="340" height="220" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_service_masters" value="&lt;b&gt;core_service_masters&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;service_id BIGINT FK NOT NULL → core_service.id&lt;br/&gt;user_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(service_id, user_id)&lt;br/&gt;&lt;b&gt;Business rule&lt;/b&gt;&lt;br/&gt;user.profile.role = 'master'" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="790" y="80" width="320" height="200" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_client" value="&lt;b&gt;core_client (legacy)&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;name VARCHAR(150) NOT NULL&lt;br/&gt;email VARCHAR(254) NOT NULL UNIQUE&lt;br/&gt;phone VARCHAR(50) NOT NULL&lt;br/&gt;notes TEXT NOT NULL default ''&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(email)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="60" y="330" width="280" height="180" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_plan" value="&lt;b&gt;core_plan&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;user_id BIGINT FK NOT NULL UNIQUE → auth_user.id&lt;br/&gt;updated_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(user_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="400" y="350" width="280" height="160" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_planitem" value="&lt;b&gt;core_planitem&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;plan_id BIGINT FK NOT NULL → core_plan.id&lt;br/&gt;service_id BIGINT FK NOT NULL → core_service.id&lt;br/&gt;qty INTEGER UNSIGNED NOT NULL default 1&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(plan_id, service_id) [unique_plan_service]&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;UK unique_plan_service(plan_id, service_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="740" y="330" width="330" height="220" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_favoriteservice" value="&lt;b&gt;core_favoriteservice&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;user_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;service_id BIGINT FK NOT NULL → core_service.id&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(user_id, service_id) [unique_favorite_service]&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;UK unique_favorite_service(user_id, service_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="1090" y="330" width="320" height="220" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_aiconversation" value="&lt;b&gt;core_aiconversation&lt;/b&gt;&lt;br/&gt;id UUID PK NOT NULL&lt;br/&gt;user_id BIGINT FK NULL → auth_user.id&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;updated_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;FK rule&lt;/b&gt;&lt;br/&gt;ON DELETE SET NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="60" y="610" width="300" height="180" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_aimessage" value="&lt;b&gt;core_aimessage&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;conversation_id UUID FK NOT NULL → core_aiconversation.id&lt;br/&gt;role VARCHAR(20) NOT NULL ENUM(user|assistant)&lt;br/&gt;content TEXT NOT NULL&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;IDX core_aimessage(conversation_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="420" y="610" width="330" height="220" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_conversation" value="&lt;b&gt;core_conversation&lt;/b&gt;&lt;br/&gt;id UUID PK NOT NULL&lt;br/&gt;client_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;master_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;updated_at DATETIME NOT NULL&lt;br/&gt;last_message_at DATETIME NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(client_id, master_id) [unique_client_master]&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;UK unique_client_master(client_id, master_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="790" y="610" width="340" height="240" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_message" value="&lt;b&gt;core_message&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;conversation_id UUID FK NOT NULL → core_conversation.id&lt;br/&gt;sender_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;body TEXT NOT NULL&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;read_at DATETIME NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;IDX(conversation_id, created_at)&lt;br/&gt;IDX(conversation_id, read_at)&lt;br/&gt;IDX(sender_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="1180" y="610" width="300" height="240" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_booking" value="&lt;b&gt;core_booking&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;user_id BIGINT FK NOT NULL → auth_user.id&lt;br/&gt;master_id BIGINT FK NULL → auth_user.id&lt;br/&gt;service_id BIGINT FK NOT NULL → core_service.id&lt;br/&gt;start_at DATETIME NOT NULL INDEX&lt;br/&gt;end_at DATETIME NOT NULL INDEX&lt;br/&gt;status VARCHAR(20) NOT NULL default 'scheduled' ENUM(scheduled|cancelled|completed)&lt;br/&gt;client_name VARCHAR(150) NOT NULL&lt;br/&gt;client_phone VARCHAR(50) NOT NULL default ''&lt;br/&gt;client_email VARCHAR(254) NOT NULL&lt;br/&gt;comment TEXT NOT NULL default ''&lt;br/&gt;created_at DATETIME NOT NULL&lt;br/&gt;updated_at DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;FK rules&lt;/b&gt;&lt;br/&gt;master_id ON DELETE PROTECT&lt;br/&gt;service_id ON DELETE PROTECT&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;IDX(start_at)&lt;br/&gt;IDX(end_at)&lt;br/&gt;IDX(user_id)&lt;br/&gt;IDX(master_id)&lt;br/&gt;IDX(service_id)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="420" y="910" width="520" height="350" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_auth_user" value="&lt;b&gt;auth_user&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;username VARCHAR(150) NOT NULL UNIQUE&lt;br/&gt;first_name VARCHAR(150) NOT NULL default ''&lt;br/&gt;last_name VARCHAR(150) NOT NULL default ''&lt;br/&gt;email VARCHAR(254) NOT NULL default ''&lt;br/&gt;password VARCHAR(128) NOT NULL&lt;br/&gt;is_staff BOOL NOT NULL&lt;br/&gt;is_active BOOL NOT NULL&lt;br/&gt;is_superuser BOOL NOT NULL&lt;br/&gt;last_login DATETIME NULL&lt;br/&gt;date_joined DATETIME NOT NULL&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(username)&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;PK(id), UK(username)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="1520" y="100" width="340" height="300" as="geometry"/>
+</mxCell>
+
+<mxCell id="t_userprofile" value="&lt;b&gt;core_userprofile&lt;/b&gt;&lt;br/&gt;id BIGINT PK NOT NULL&lt;br/&gt;user_id BIGINT FK NOT NULL UNIQUE → auth_user.id&lt;br/&gt;full_name VARCHAR(150) NOT NULL default ''&lt;br/&gt;phone VARCHAR(50) NOT NULL default ''&lt;br/&gt;avatar VARCHAR(100) NULL&lt;br/&gt;role VARCHAR(20) NOT NULL ENUM(client|admin|master)&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Constraints&lt;/b&gt;&lt;br/&gt;UNIQUE(user_id)&lt;br/&gt;&lt;b&gt;Indexes&lt;/b&gt;&lt;br/&gt;UK(user_id)&lt;br/&gt;&lt;b&gt;Ordering&lt;/b&gt;&lt;br/&gt;full_name" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacing=6;" vertex="1" parent="1">
+  <mxGeometry x="1520" y="460" width="340" height="260" as="geometry"/>
+</mxCell>
+
+<mxCell id="note_default" value="Django ORM + PostgreSQL&#xa;DEFAULT_AUTO_FIELD = BigAutoField&#xa;AUTH_USER_MODEL = standard auth_user" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+  <mxGeometry x="1520" y="760" width="340" height="100" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_sc_s" value="1:N category_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_servicecategory" target="t_service">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_s_sm" value="1:N service_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_service" target="t_service_masters">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_sm" value="1:N user_id (master)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_service_masters">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_up" value="1:1 user_id UNIQUE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;strokeWidth=2;dashed=0;" edge="1" parent="1" source="t_auth_user" target="t_userprofile">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_p" value="1:1 user_id UNIQUE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_plan">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_p_pi" value="1:N plan_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_plan" target="t_planitem">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_s_pi" value="1:N service_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_service" target="t_planitem">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_fs" value="1:N user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_favoriteservice">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_s_fs" value="1:N service_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_service" target="t_favoriteservice">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_aic" value="1:N user_id NULL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="t_auth_user" target="t_aiconversation">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_aic_aim" value="1:N conversation_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_aiconversation" target="t_aimessage">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_conv_client" value="1:N client_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_conversation">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_conv_master" value="1:N master_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="t_auth_user" target="t_conversation">
+  <mxGeometry relative="1" as="geometry">
+    <Array as="points">
+      <mxPoint x="1900" y="250"/>
+      <mxPoint x="1900" y="760"/>
+    </Array>
+  </mxGeometry>
+</mxCell>
+
+<mxCell id="e_conv_msg" value="1:N conversation_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_conversation" target="t_message">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_msg_sender" value="1:N sender_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_message">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_b_user" value="1:N user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_auth_user" target="t_booking">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="e_u_b_master" value="1:N master_id NULL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;dashed=1;" edge="1" parent="1" source="t_auth_user" target="t_booking">
+  <mxGeometry relative="1" as="geometry">
+    <Array as="points">
+      <mxPoint x="1980" y="250"/>
+      <mxPoint x="1980" y="1085"/>
+    </Array>
+  </mxGeometry>
+</mxCell>
+
+<mxCell id="e_s_b" value="1:N service_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;startArrow=ERone;endFill=1;strokeWidth=2;" edge="1" parent="1" source="t_service" target="t_booking">
+  <mxGeometry relative="1" as="geometry"/>
+</mxCell>
+</root> </mxGraphModel>

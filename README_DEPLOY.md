@@ -26,7 +26,7 @@ Key variables:
 - `DJANGO_SECRET_KEY` (required)
 - `DJANGO_ALLOWED_HOSTS` (must include `72.56.70.71`)
 - `POSTGRES_*` values
-- `OPENAI_API_KEY` (if you use AI assistant)
+- `OPENROUTER_API_KEY` (if you use AI assistant)
 - `CORS_ALLOWED_ORIGINS` / `CSRF_TRUSTED_ORIGINS` (use the IPv4)
 - `DJANGO_SECURE_COOKIES` should stay `false` for HTTP-only deployment
 
